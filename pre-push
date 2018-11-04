@@ -1,0 +1,99 @@
+#!/bin/bash
+
+
+VERSION="BaseAngular"
+
+FAILED="\e[1m\e[31mFAILED\e[0m"
+SUCCESS="\e[1m\e[32mSUCCESS\e[0m"
+
+header()
+{
+    clear
+    echo "                   \////"
+    echo "                  ( 0 0 )"
+    echo "----------------ooO-(_)-Ooo-----------------"
+    echo "          git push breaker v${VERSION}"
+    echo ""
+}
+
+footer()
+{
+    echo "--------------------------------------------"
+    echo "                   | | |"
+    echo "                    |||"
+    echo "                  ooO Ooo"
+}
+
+git_status()
+{
+  echo -n "  Checking your working directory..."
+  GIT_STATUS=$(git status --porcelain)
+  WD_CLEAN=`git status --porcelain | wc -l`
+  GIT_MESSAGE=$(echo 'git status --porcelain returned:'; \
+                echo "${GIT_STATUS}"; \
+                echo; \
+                echo "Please make sure your working directory is clean (You can use git stash to achieve this)")
+  error_checking $WD_CLEAN "${GIT_MESSAGE}"
+}
+
+javascript_checkstyle()
+{
+    echo -n "Lint running... "
+    VERIFY=$(ng lint)
+    exit_code=$?
+    error_checking $exit_code "${VERIFY}"
+    cd - 2>&1 >/dev/null
+}
+
+angular_build()
+{
+    echo -n "Angular build... "
+    BUILD=$(ng build --aot=true --prod --build-optimizer=false)
+    exit_code=$?
+    error_checking $exit_code "${BUILD}"
+    cd - 2>&1 >/dev/null
+}
+
+error_checking()
+{
+    if [ $1 -ne 0 ]; then
+        echo -e $FAILED
+        echo
+        echo "$2"
+        echo
+        footer
+        exit 1
+    fi
+    echo -e $SUCCESS
+}
+
+karma(){
+
+	echo "Running Karma"
+	karma=$(ng test)
+	exit_code=$?
+
+	if [[ $karma == *" 0 of 0 ERROR"* ]]; then
+		echo -e $SUCCESS
+	else
+		echo -e $FAILED
+		echo
+        echo $karma
+        echo
+        footer
+        exit 1
+	fi
+
+
+
+
+}
+
+header
+git_status
+javascript_checkstyle
+angular_build
+karma
+footer
+
+exit 0
