@@ -1,1 +1,49 @@
 /* You can add global styles to this file, and also import other style files */
+html {
+  height: 98%;
+  width: 103%;
+}
+
+
+
+body{
+  height: 100%;
+  width: 100%;
+}
+
+body, html {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.fullScreen{
+  height: 95%;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.overLap{
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.transparent{
+  background-color: transparent;
+}
+
+.red{
+  background-color: red;
+}
+
+.yellow{
+  background-color: yellow;
+}
+
+
+.first{
+  z-index: 12;
+}

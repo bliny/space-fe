@@ -1,43 +1,63 @@
-import { Component } from "@angular/core";
-import * as THREE from 'three';
+import { Component, Inject, OnInit, Renderer2, ViewChild } from "@angular/core";
+import * as THREE from "three";
+import { MTLLoader, OBJLoader } from "three-obj-mtl-loader";
+import { DOCUMENT } from "@angular/common";
 
 @Component({
   selector: "app-root",
   templateUrl: "./app.component.html",
   styleUrls: ["./app.component.scss"]
 })
-export class AppComponent {
+export class AppComponent implements OnInit {
+  WIDTH = window.innerWidth;
+  HEIGHT = window.innerHeight;
+
+  VIEW_ANGLE = 45;
+  ASPECT = this.WIDTH / this.HEIGHT;
+  NEAR = 0.5;
+  FAR = 600000;
+
+  RADIUS = 30;
+  SEGMENTS = 32;
+  RINGS = 32;
+
+  startTime: any = Date.now();
+
   title = "base-app";
 
-  camera; scene; renderer;
-  geometry; material; mesh;
+  @ViewChild("webGL")
+  webGL;
 
-  constructor(){
-    this.camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 0.01, 10 );
-    this.camera.position.z = 1;
+  camera;
+  scene;
+  renderer;
+  geometry;
+  material;
+  earth;
+  uniforms;
+  cloudMesh;
+  moon;
 
-    this.scene = new THREE.Scene();
+  constructor(
+    private renderer2: Renderer2,
+    @Inject(DOCUMENT) private document
+  ) {}
 
-    this.geometry = new THREE.BoxGeometry( 0.2, 0.2, 0.2 );
-    this.material = new THREE.MeshNormalMaterial();
+  scroll(event) {}
 
-    this.mesh = new THREE.Mesh( this.geometry, this.material );
-    this.scene.add( this.mesh );
-
-    this.renderer = new THREE.WebGLRenderer( { antialias: true } );
-    this.renderer.setSize( window.innerWidth, window.innerHeight );
-    document.body.appendChild( this.renderer.domElement );
-    this.animate();
-  }
+  public ngOnInit() {}
 
   animate() {
-
     requestAnimationFrame(() => this.animate());
 
-    this.mesh.rotation.x += 0.01;
-    this.mesh.rotation.y += 0.02;
+    const elapsedMilliseconds = Date.now() - this.startTime;
+    const elapsedSeconds = elapsedMilliseconds / 1000;
+    // this.earth.rotation.x += 0.001;
 
-    this.renderer.render( this.scene, this.camera );
-
+    this.earth.rotation.y += 0.001;
+    //this.cloudMesh.rotation.x += 0.001;
+    this.cloudMesh.rotation.y += 0.0005;
+    this.uniforms.time.value = 2 * elapsedSeconds;
+    this.renderer.render(this.scene, this.camera);
   }
 }
