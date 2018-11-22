@@ -14,7 +14,9 @@ export class Star {
   }
 }
 
-@Injectable()
+@Injectable({
+  providedIn: "root"
+})
 export class StarFactory {
   segments = 32;
   rings = 32;

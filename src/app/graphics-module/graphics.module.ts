@@ -6,17 +6,14 @@ import { SolarSystemRenderingComponent } from "./rendering/solar-system-renderin
 import { RenderingService } from "./services/rendering-service";
 import { RenderingBaseComponent } from "./rendering/rendering-base/rendering-base.component";
 import { StarFactory } from "./services/star/star.factory";
+import { ObjectLoaderService } from "./services/object-loader/object-loader.service";
+import { HttpClientModule } from "@angular/common/http";
 
 @NgModule({
-  imports: [CommonModule],
+  imports: [CommonModule, HttpClientModule],
   declarations: [SolarSystemRenderingComponent, RenderingBaseComponent],
   exports: [SolarSystemRenderingComponent, RenderingBaseComponent],
-  providers: [
-    { provide: "Window", useValue: window },
-    PlanetFactory,
-    TextureLoader,
-    StarFactory
-  ]
+  providers: [{ provide: "Window", useValue: window }]
   //
   //{width: '1300px', height:'1300px'}
 })

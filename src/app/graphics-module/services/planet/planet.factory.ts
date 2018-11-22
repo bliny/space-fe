@@ -3,7 +3,9 @@ import * as THREE from "three";
 import { PlanetTexture } from "./planet-texture";
 import { TextureLoader } from "../texture/texture-loader.service";
 
-@Injectable()
+@Injectable({
+  providedIn: "root"
+})
 export class PlanetFactory {
   segments = 32;
   rings = 32;

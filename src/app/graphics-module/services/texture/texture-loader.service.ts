@@ -1,7 +1,9 @@
 import { Injectable } from "@angular/core";
 import * as THREE from "three";
 
-@Injectable()
+@Injectable({
+  providedIn: "root"
+})
 export class TextureLoader {
   base = "./assets/";
 
