@@ -41,7 +41,6 @@ export class PlanetFactory {
 
     const planet = new THREE.Mesh(
       new THREE.SphereGeometry(planetSize, this.segments, this.rings),
-
       planetMaterial
     );
 

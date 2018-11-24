@@ -8,12 +8,14 @@ import { RenderingBaseComponent } from "./rendering/rendering-base/rendering-bas
 import { StarFactory } from "./services/star/star.factory";
 import { ObjectLoaderService } from "./services/object-loader/object-loader.service";
 import { HttpClientModule } from "@angular/common/http";
+import {AdditiveBlendingShaderService} from './services/shader/additive-blending-shader.service';
+import {VolumetericLightShaderService} from './services/shader/volumeteric-light-shader.service';
 
 @NgModule({
   imports: [CommonModule, HttpClientModule],
   declarations: [SolarSystemRenderingComponent, RenderingBaseComponent],
   exports: [SolarSystemRenderingComponent, RenderingBaseComponent],
-  providers: [{ provide: "Window", useValue: window }]
+  providers: [{ provide: "Window", useValue: window }, AdditiveBlendingShaderService, VolumetericLightShaderService]
   //
   //{width: '1300px', height:'1300px'}
 })

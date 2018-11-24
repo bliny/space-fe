@@ -7,9 +7,9 @@ import { RenderingService, RenderingSize } from "./rendering-service";
 })
 export class CameraService {
   aspect;
-  view_angle = 45;
-  near = 0.5;
-  far = 5000;
+  view_angle = 75;
+  near = 0.1;
+  far = 1000;
 
   camera: THREE.PerspectiveCamera;
 
@@ -23,9 +23,9 @@ export class CameraService {
         this.near,
         this.far
       );
-      this.camera.position.x = 400;
-      this.camera.position.y = 400;
-      this.camera.position.z = 400;
+      this.camera.position.x = 0;
+      this.camera.position.y = 0;
+      this.camera.position.z = 6;
     });
   }
 

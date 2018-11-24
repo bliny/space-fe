@@ -31,7 +31,7 @@
     "prettier": "^1.14.3",
     "protractor": "^5.4.1",
     "rxjs": "~6.3.3",
-    "three": "^0.98.0",
+    "three": "0.96.0",
     "three-full": "^11.3.2",
     "three-map-controls": "^1.0.1",
     "three-mtl-loader": "^1.0.2",

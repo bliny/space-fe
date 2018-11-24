@@ -22,7 +22,7 @@ import {
   providedIn: "root"
 })
 export class BlurService {
-  private width: number;
+/*  private width: number;
   private height: number;
   private renderer: THREE.WebGLRenderer;
   private blurComposer: EffectComposer;
@@ -131,4 +131,6 @@ export class BlurService {
       verticalPass: verticalBlurShaderPass
     };
   }
+
+  */
 }

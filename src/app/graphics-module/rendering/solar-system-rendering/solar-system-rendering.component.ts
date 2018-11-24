@@ -17,6 +17,10 @@ import { Star, StarFactory } from "../../services/star/star.factory";
 import { ObjectLoaderService } from "../../services/object-loader/object-loader.service";
 import { ShaderLoaderService } from "../../services/shader/shader-loader.service";
 import { BlurService } from "../../services/shader/blur.service";
+import {
+  VolumetericLightShaderService,
+  VolumetericLightShaderUniform
+} from '../../services/shader/volumeteric-light-shader.service';
 
 import {
   ShaderPass,
@@ -33,6 +37,9 @@ import {
   CopyShader,
   RGBShiftShader
 } from "three-full";
+import {AdditiveBlendingShaderService} from '../../services/shader/additive-blending-shader.service';
+
+
 
 @Component({
   selector: "solar-system-rendering",
@@ -45,6 +52,7 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   uniforms;
   cloudMesh;
   moon;
+
 
   renderer: THREE.WebGLRenderer;
   camera;
@@ -61,8 +69,13 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   DEFAULT_LAYER = 0;
   OCCLUSION_LAYER = 1;
 
+  lightSphere;
+  occlusionRenderTarget
+
   private occlusionComposer: EffectComposer;
   private sceneComposer: EffectComposer;
+
+
 
   @ViewChild("solarSystemRendering")
   solarSystemRendering: ElementRef;
@@ -73,19 +86,19 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     private planetFactory: PlanetFactory,
     private startFactory: StarFactory,
     private objectLoader: ObjectLoaderService,
-    private blurService: BlurService
+    private additiveBlending: AdditiveBlendingShaderService,
+    private volumeLight: VolumetericLightShaderService,
   ) {
     this.camera = cameraService.getCamera();
     this.renderingService.getRenderer().subscribe(renderer => {
       this.renderer = renderer;
-      const occlusionRenderTarget = new THREE.WebGLRenderTarget(
+      this.occlusionRenderTarget = new THREE.WebGLRenderTarget(
         window.innerWidth,
-        window.innerHeight,
-        renderer
+        window.innerHeight
       );
       this.occlusionComposer = new EffectComposer(
         renderer,
-        occlusionRenderTarget
+        this.occlusionRenderTarget
       );
       this.sceneComposer = new EffectComposer(renderer);
     });
@@ -114,11 +127,12 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     this.controls.enableDamping = true; // Set to false to disable damping (ie inertia)
     this.controls.dampingFactor = 0.25;
     //this.controls.autoRotate=true;
+
   }
 
   ngOnInit() {
     this.scene = new THREE.Scene();
-    this.earth = this.planetFactory.createPlanet(
+ /*   this.earth = this.planetFactory.createPlanet(
       PlanetTexture.EARTH,
       30,
       new THREE.Vector3(0, 0, 0),
@@ -162,55 +176,57 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     this.plane.rotation.x = 1.57;
 
     this.scene.add(this.plane);
-
+*/
     this.scene.add(new THREE.AxesHelper(500));
 
-    const shadowLight: any = new THREE.PointLight(0xffffff, 10, 800);
-    shadowLight.position.set(40, 40, 300);
+    const ambientLight = new THREE.AmbientLight(0x2c3e50);
+    this.scene.add(ambientLight);
+
+    const pointLight: any = new THREE.PointLight(0xffffff);
+    //pointLight.position.set(40, 0, 0);
+    //this.scene.add(pointLight);
 
     const geometrySun = new THREE.SphereBufferGeometry(1, 16, 16);
     const materialSun = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const lightSphere = new THREE.Mesh(geometrySun, materialSun);
-    lightSphere.position.set(40, 40, 300);
-    lightSphere.layers.set(this.OCCLUSION_LAYER);
 
-    this.scene.add(lightSphere);
+    this.lightSphere = new THREE.Mesh(geometrySun, materialSun);
+    //this.lightSphere.position.set(40, 0, 0);
+    this.lightSphere.layers.set(this.OCCLUSION_LAYER);
+    this.scene.add(this.lightSphere);
 
-    this.objectLoader
-      .loadObject("Sample_Ship", "Sample_Ship")
-      .subscribe(object => {
-        object.position.x = 0;
-        object.position.y = 0;
-        object.position.z = 40;
-        object.scale.x = 5;
-        object.scale.y = 5;
-        object.scale.z = 5;
-        this.scene.add(object);
-      });
 
-    this.objectLoader
-      .loadObject("Sample_Ship", "Sample_Ship")
-      .subscribe(occlusionShip => {
-        occlusionShip.position.x = 0;
-        occlusionShip.position.y = 0;
-        occlusionShip.position.z = 40;
-        occlusionShip.scale.x = 5;
-        occlusionShip.scale.y = 5;
-        occlusionShip.scale.z = 5;
-        occlusionShip.material = new THREE.MeshBasicMaterial({
-          color: 0x000000
-        });
-        occlusionShip.layers.set(this.OCCLUSION_LAYER);
-        this.scene.add(occlusionShip);
-      });
+    const planet = new THREE.Mesh(
+      new THREE.SphereBufferGeometry(1, 1,1),
+      new THREE.MeshPhongMaterial( { color: 0xe74c3c }),
+    );
+
+    planet.position.z = 2;
+    this.scene.add(planet);
+
+    const occPlanet = new THREE.Mesh(
+      new THREE.SphereBufferGeometry(1, 1,1),
+      new THREE.MeshPhongMaterial( { color: 0x000000 }),
+    );
+
+    occPlanet.position.z = 2;
+    occPlanet.layers.set(this.OCCLUSION_LAYER);
+    this.scene.add(occPlanet);
+
 
     this.animate();
   }
 
+  postProcessed = false;
   @HostListener("mousedown", ["$event"])
   onMousedown(event) {
-    this.postProcess();
-    const mouse = new THREE.Vector2();
+    if(!this.postProcessed) {
+
+      this.postProcess();
+      this.postProcessed = true;
+
+    }
+
+   /* const mouse = new THREE.Vector2();
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
     this.rayCaster.setFromCamera(mouse, this.camera);
@@ -223,6 +239,7 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     this.earth.position.z = intersects[0].point.z;
 
     console.log(intersects[0]);
+    */
   }
 
   /*
@@ -254,20 +271,19 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
     //this.plane.rotation.x += 0.01;
     // console.log(this.plane.rotation.x);
+    if(this.postProcessed) {
 
-    this.camera.layers.set(this.OCCLUSION_LAYER);
-    // set a black background for the render
-    this.renderer.setClearColor(0x000000);
-    // render the occlusion scene and apply the volumetric light shader
-    this.occlusionComposer.render();
+      this.camera.layers.set(this.OCCLUSION_LAYER);
+      //this.renderer.setClearColor(0x000000);
+      this.occlusionComposer.render();
 
-    // show the objects in the lit scene
-    this.camera.layers.set(this.DEFAULT_LAYER);
-    // set a new background color
-    this.renderer.setClearColor(0x090611);
-    // render the lit scene and blend the volumetric light effect
-    this.sceneComposer.render();
 
+      this.camera.layers.set(this.DEFAULT_LAYER);
+      //this.renderer.setClearColor(0x090611);
+      this.sceneComposer.render();
+
+
+    }
     if (this.blur) {
       //this.blur.render();
     }
@@ -287,20 +303,34 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     this.occlusionComposer.addPass(new RenderPass(this.scene, this.camera));
     // add the volumeteric shader pass that will automatically be applied
     // to texture created by the scene render
-    const pass1 = new ShaderPass(VolumetericLightShader);
+    const uniform = new VolumetericLightShaderUniform();
+    uniform.samples = 50;
+    uniform.exposure = 0.18;
+    uniform.decay = 0.95;
+    uniform.density = 0.8;
+    uniform.weight = 0.4;
+    uniform.lightPosition = this.lightSphere.position;
+
+    const pass1 = this.volumeLight.createShader(uniform);
     // since only one shader is used the front and back buffers do not need to be swapped
     // after the shader does its work.
     pass1.needsSwap = false;
     this.occlusionComposer.addPass(pass1);
+    const anyukad = new RenderPass(this.scene, this.camera);
+    anyukad.renderToScreen=true;
+    this.occlusionComposer.addPass(anyukad);
+    console.log(this.occlusionComposer);
+
 
     // a second composer and render pass for the lit scene
-    this.sceneComposer = new EffectComposer(this.renderer);
     this.sceneComposer.addPass(new RenderPass(this.scene, this.camera));
     // an additive blending pass that takes as a uniform
     // the resulting texture from the volumetric light shader
-    const pass2 = new ShaderPass(AdditiveBlendingShader);
-    pass2.uniforms.tAdd.value = this.occlusionComposer.renderTarget2.texture;
+    const pass2 = this.additiveBlending.createShader(this.occlusionComposer.renderTarget1.texture);
+    pass2.uniforms.tAdd.value = this.occlusionComposer.renderTarget1.texture;
     this.sceneComposer.addPass(pass2);
     pass2.renderToScreen = true;
+
+    console.log(this.camera);
   }
 }
