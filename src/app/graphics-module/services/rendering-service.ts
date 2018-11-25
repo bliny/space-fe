@@ -33,7 +33,7 @@ export class RenderingService {
       canvas: canvasRef.nativeElement,
       antialias: true,
       logarithmicDepthBuffer: true,
-      alpha: true
+      //alpha: true
     });
     newRenderer.setSize(
       this.renderingSize.getValue().width,
@@ -41,7 +41,7 @@ export class RenderingService {
     );
     newRenderer.shadowMap.enabled = true;
     newRenderer.autoClear = false;
-    newRenderer.setClearColor(0x000000, 1.0);
+    newRenderer.setClearColor(0x000000);
     //canvasRef.nativeElement.appendChild( newRenderer.domElement );
     this.renderer.next(newRenderer);
   }
