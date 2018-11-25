@@ -1,6 +1,8 @@
 import { ElementRef, Inject, Injectable } from "@angular/core";
-import * as THREE from "three";
 import { BehaviorSubject, Observable } from "rxjs";
+import {
+  WebGLRenderer
+} from "three-full";
 
 export class RenderingSize {
   readonly width: number;
@@ -16,18 +18,18 @@ export class RenderingSize {
   providedIn: "root"
 })
 export class RenderingService {
-  private readonly renderer: BehaviorSubject<THREE.WebGLRenderer>;
+  private readonly renderer: BehaviorSubject<WebGLRenderer>;
   private readonly renderingSize: BehaviorSubject<RenderingSize>;
 
   constructor(@Inject("Window") private window: Window) {
-    this.renderer = new BehaviorSubject<THREE.WebGLRenderer>(null);
+    this.renderer = new BehaviorSubject<WebGLRenderer>(null);
     this.renderingSize = new BehaviorSubject<RenderingSize>(
       new RenderingSize(window.innerWidth, window.innerHeight)
     );
   }
 
   public init(canvasRef: ElementRef) {
-    const newRenderer = new THREE.WebGLRenderer({
+    const newRenderer = new WebGLRenderer({
       canvas: canvasRef.nativeElement,
       antialias: true,
       logarithmicDepthBuffer: true,
@@ -46,7 +48,7 @@ export class RenderingService {
 
   resize() {}
 
-  getRenderer(): Observable<THREE.WebGLRenderer> {
+  getRenderer(): Observable<WebGLRenderer> {
     return this.renderer.asObservable();
   }
 

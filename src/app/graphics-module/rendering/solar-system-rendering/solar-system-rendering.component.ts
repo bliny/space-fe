@@ -9,14 +9,8 @@ import {
 import { RenderingService } from "../../services/rendering-service";
 import { CameraService } from "../../services/camera-service";
 import { PlanetFactory } from "../../services/planet/planet.factory";
-import * as THREE from "three";
-import { PlanetTexture } from "../../services/planet/planet-texture";
-import MapControls from "three-map-controls";
-import OrbitControls from "orbit-controls-es6";
 import { Star, StarFactory } from "../../services/star/star.factory";
-import { ObjectLoaderService } from "../../services/object-loader/object-loader.service";
-import { ShaderLoaderService } from "../../services/shader/shader-loader.service";
-import { BlurService } from "../../services/shader/blur.service";
+import { ObjectLoaderService } from "../../services/object-loader/object-loader.service"
 import {
   VolumetericLightShaderService,
   VolumetericLightShaderUniform
@@ -35,9 +29,24 @@ import {
   VolumetericLightShader,
   AdditiveBlendingShader,
   CopyShader,
-  RGBShiftShader
+  RGBShiftShader,
+  OutlinePass,
+  FXAAShader,
+  Raycaster,
+  Scene,
+  WebGLRenderTarget,
+  AmbientLight,
+  PointLight,
+  SphereBufferGeometry,
+  MeshBasicMaterial,
+  MeshPhongMaterial,
+  Mesh,
+  Vector2,
+  OrbitControls,
+  ShaderGodRays
 } from "three-full";
 import {AdditiveBlendingShaderService} from '../../services/shader/additive-blending-shader.service';
+import {OutlineShaderPassService, OutlineUniform} from '../../services/shader/outline-shader-pass';
 
 
 
@@ -54,16 +63,17 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   moon;
 
 
-  renderer: THREE.WebGLRenderer;
+  renderer;
   camera;
-  scene: THREE.Scene;
-  earth: THREE.Mesh;
-  controls;
-  rayCaster = new THREE.Raycaster();
+  scene: Scene;
+
+  rayCaster = new Raycaster();
   star: Star;
   plane;
 
   blur;
+
+  controls
 
   // ubersun
   DEFAULT_LAYER = 0;
@@ -74,6 +84,9 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
   private occlusionComposer: EffectComposer;
   private sceneComposer: EffectComposer;
+
+  outlinePass;
+  selectedObjects: Array<any>;
 
 
 
@@ -88,11 +101,12 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     private objectLoader: ObjectLoaderService,
     private additiveBlending: AdditiveBlendingShaderService,
     private volumeLight: VolumetericLightShaderService,
+    private outlinePassService: OutlineShaderPassService,
   ) {
     this.camera = cameraService.getCamera();
     this.renderingService.getRenderer().subscribe(renderer => {
       this.renderer = renderer;
-      this.occlusionRenderTarget = new THREE.WebGLRenderTarget(
+      this.occlusionRenderTarget = new WebGLRenderTarget(
         window.innerWidth,
         window.innerHeight
       );
@@ -101,6 +115,20 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
         this.occlusionRenderTarget
       );
       this.sceneComposer = new EffectComposer(renderer);
+      this.scene = new Scene();
+
+      this.selectedObjects = new Array<any>();
+
+      const outlineUniform = new OutlineUniform();
+      outlineUniform.edgeStrength = 6;
+      outlineUniform.edgeGlow = 1;
+      outlineUniform.edgeThickness =3 ;
+      outlineUniform.pulsePeriod = 2;
+      outlineUniform.visibleEdgeColor = '#ff2424';
+      outlineUniform.selectedObjectArray = this.selectedObjects;
+
+      this.outlinePass = outlinePassService.createOutlineShaderPass(this.scene, this.camera, window.innerWidth,
+        window.innerHeight, outlineUniform );
     });
   }
 
@@ -131,7 +159,7 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit() {
-    this.scene = new THREE.Scene();
+
  /*   this.earth = this.planetFactory.createPlanet(
       PlanetTexture.EARTH,
       30,
@@ -177,35 +205,35 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
     this.scene.add(this.plane);
 */
-    this.scene.add(new THREE.AxesHelper(500));
+    //this.scene.add(new THREE.AxesHelper(500));
 
-    const ambientLight = new THREE.AmbientLight(0x2c3e50);
+    const ambientLight = new AmbientLight(0x2c3e50);
     this.scene.add(ambientLight);
 
-    const pointLight: any = new THREE.PointLight(0xffffff);
+    const pointLight: any = new PointLight(0xffffff);
     //pointLight.position.set(40, 0, 0);
-    //this.scene.add(pointLight);
+    this.scene.add(pointLight);
 
-    const geometrySun = new THREE.SphereBufferGeometry(1, 16, 16);
-    const materialSun = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const geometrySun = new SphereBufferGeometry(1, 16, 16);
+    const materialSun = new MeshBasicMaterial({ color: 0xffffff });
 
-    this.lightSphere = new THREE.Mesh(geometrySun, materialSun);
+    this.lightSphere = new Mesh(geometrySun, materialSun);
     //this.lightSphere.position.set(40, 0, 0);
     this.lightSphere.layers.set(this.OCCLUSION_LAYER);
     this.scene.add(this.lightSphere);
 
 
-    const planet = new THREE.Mesh(
-      new THREE.SphereBufferGeometry(1, 1,1),
-      new THREE.MeshPhongMaterial( { color: 0xe74c3c }),
+    const planet = new Mesh(
+      new SphereBufferGeometry(1, 1,1),
+      new MeshPhongMaterial( { color: 0xe74c3c }),
     );
 
     planet.position.z = 2;
     this.scene.add(planet);
 
-    const occPlanet = new THREE.Mesh(
-      new THREE.SphereBufferGeometry(1, 1,1),
-      new THREE.MeshPhongMaterial( { color: 0x000000 }),
+    const occPlanet = new Mesh(
+      new SphereBufferGeometry(1, 1,1),
+      new MeshPhongMaterial( { color: 0x000000 }),
     );
 
     occPlanet.position.z = 2;
@@ -219,6 +247,25 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   postProcessed = false;
   @HostListener("mousedown", ["$event"])
   onMousedown(event) {
+
+    if(this.postProcessed) {
+      const mouse = new Vector2();
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      this.rayCaster.setFromCamera(mouse, this.camera);
+
+      const intersects = this.rayCaster.intersectObjects(this.scene.children);
+
+      if(intersects.length > 0) {
+        this.outlinePass.selectedObjects.length = 0;
+        this.outlinePass.selectedObjects.push(intersects[0].object);
+
+        console.log(intersects[0]);
+        console.log(this.outlinePass);
+      }
+    }
+
+
     if(!this.postProcessed) {
 
       this.postProcess();
@@ -226,20 +273,11 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
     }
 
-   /* const mouse = new THREE.Vector2();
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    this.rayCaster.setFromCamera(mouse, this.camera);
 
-    const intersects = this.rayCaster.intersectObjects(this.scene.children);
 
-    //intersects[0].point;
-    this.earth.position.x = intersects[0].point.x;
-    this.earth.position.y = intersects[0].point.y;
-    this.earth.position.z = intersects[0].point.z;
 
-    console.log(intersects[0]);
-    */
+
+
   }
 
   /*
@@ -274,12 +312,12 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     if(this.postProcessed) {
 
       this.camera.layers.set(this.OCCLUSION_LAYER);
-      //this.renderer.setClearColor(0x000000);
+      this.renderer.setClearColor(0x000000);
       this.occlusionComposer.render();
 
 
       this.camera.layers.set(this.DEFAULT_LAYER);
-      //this.renderer.setClearColor(0x090611);
+      this.renderer.setClearColor(0x090611);
       this.sceneComposer.render();
 
 
@@ -297,12 +335,6 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   }
 
   private postProcess() {
-    // create the occlusion render target and composer
-    // to increase performance we only render the effect at 1/2 the screen size
-    // add a scene render pass
-    this.occlusionComposer.addPass(new RenderPass(this.scene, this.camera));
-    // add the volumeteric shader pass that will automatically be applied
-    // to texture created by the scene render
     const uniform = new VolumetericLightShaderUniform();
     uniform.samples = 50;
     uniform.exposure = 0.18;
@@ -311,26 +343,51 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     uniform.weight = 0.4;
     uniform.lightPosition = this.lightSphere.position;
 
+    // add the volumeteric shader pass that will automatically be applied
+    // to texture created by the scene render
+
+    this.occlusionComposer.addPass(new RenderPass(this.scene, this.camera));
     const pass1 = this.volumeLight.createShader(uniform);
-    // since only one shader is used the front and back buffers do not need to be swapped
-    // after the shader does its work.
     pass1.needsSwap = false;
     this.occlusionComposer.addPass(pass1);
-    const anyukad = new RenderPass(this.scene, this.camera);
-    anyukad.renderToScreen=true;
-    this.occlusionComposer.addPass(anyukad);
+
+    const renderPass = new RenderPass(this.scene, this.camera);
+    this.occlusionComposer.addPass(renderPass);
+
+
     console.log(this.occlusionComposer);
 
 
-    // a second composer and render pass for the lit scene
-    this.sceneComposer.addPass(new RenderPass(this.scene, this.camera));
-    // an additive blending pass that takes as a uniform
-    // the resulting texture from the volumetric light shader
-    const pass2 = this.additiveBlending.createShader(this.occlusionComposer.renderTarget1.texture);
-    pass2.uniforms.tAdd.value = this.occlusionComposer.renderTarget1.texture;
-    this.sceneComposer.addPass(pass2);
-    pass2.renderToScreen = true;
 
+    const renderPass2= new RenderPass(this.scene, this.camera);
+    renderPass2.clear = false;
+    //renderPass2.renderToScreen=true;
+
+
+    const additiveShader = this.additiveBlending.createShader(this.occlusionComposer.renderTarget1.texture);
+    additiveShader.uniforms.tAdd.value = this.occlusionComposer.renderTarget1.texture;
+
+    this.sceneComposer.addPass(renderPass2);
+
+    //this.outlinePass.renderToScreen = true;
+   // this.sceneComposer.addPass(this.outlinePass);
+
+    this.outlinePass.renderToScreen = false;
+    //this.sceneComposer.addPass(new RenderPass(this.scene, this.camera));
+    this.sceneComposer.addPass(this.outlinePass);
+
+    additiveShader.renderToScreen=true;
+    this.sceneComposer.addPass(additiveShader);
+
+
+
+    const effectFXAA = new ShaderPass( FXAAShader );
+    effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
+    effectFXAA.renderToScreen = true;
+    //this.sceneComposer.addPass( effectFXAA );
+
+
+    //this.sceneComposer.addPass(renderPass2);
     console.log(this.camera);
   }
 }
