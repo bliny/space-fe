@@ -46,21 +46,17 @@ export class PlanetFactory {
 
     planet.name = name;
 
-    const cloudGeometry = new THREE.SphereGeometry(
-      planetSize + 2,
-      this.segments,
-      this.rings
-    );
-    const cloudMaterial = new THREE.MeshPhongMaterial({
-      map: this.textureLoader.loadTexture(planetTexturePath + this.atmoTexture),
-      side: THREE.DoubleSide,
-      opacity: 0.8,
-      transparent: true,
-      depthWrite: false
-    });
-
-    const cloudMesh = new THREE.Mesh(cloudGeometry, cloudMaterial);
-    planet.add(cloudMesh);
+    /*const cloudMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(planetSize, this.segments, this.rings),
+      new THREE.MeshPhongMaterial({
+        map: this.textureLoader.loadTexture('ny.jpg'),
+        // side: THREE.DoubleSide,
+        //opacity: 0.5,
+        //transparent: true,
+        //depthWrite: false
+      }));
+*/
+    //planet.add(cloudMesh);
 
     planet.position.x = position.x;
     planet.position.y = position.y;

@@ -49,7 +49,7 @@ import {
   MeshBasicMaterial,
   MeshPhongMaterial,
   Mesh,
-  Vector2,
+  Vector2, Vector3,
   OrbitControls,
   ShaderGodRays,
   LinearFilter,RGBFormat, UniformsUtils, ShaderMaterial,PlaneBufferGeometry,PointsMaterial
@@ -57,6 +57,7 @@ import {
 import {AdditiveBlendingShaderService} from '../../services/shader/additive-blending-shader.service';
 import {OutlineShaderPassService, OutlineUniform} from '../../services/shader/outline-shader-pass';
 import {TextureLoader} from '../../services/texture/texture-loader.service';
+import {PlanetTexture} from '../../services/planet/planet-texture';
 
 
 
@@ -175,13 +176,16 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
 
- /*   this.earth = this.planetFactory.createPlanet(
+    const earth = this.planetFactory.createPlanet(
       PlanetTexture.EARTH,
-      30,
-      new THREE.Vector3(0, 0, 0),
+      1,
+      new Vector3(2, 2, 2),
       "earth"
     );
+    this.scene.add(earth);
 
+
+/*
     this.moon = this.planetFactory.createPlanet(
       PlanetTexture.MOON,
       10,
@@ -242,8 +246,6 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     });
 
     this.lightSphere = new Mesh(geometrySun, sunMaterial);
-    //this.lightSphere.position.set(40, 0, 0);
-    //this.lightSphere.layers.set(this.OCCLUSION_LAYER);
     this.scene.add(this.lightSphere);
 
 
@@ -251,29 +253,30 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
       new SphereBufferGeometry(1, 1,1),
       new MeshPhongMaterial( { color: 0xe74c3c }),
     );
-
     planet.position.z = 2;
     this.scene.add(planet);
 
-
-    const planet3 = new Mesh(
-      new SphereBufferGeometry(1, 1,1),
+    const planet2 = new Mesh(
+      new SphereBufferGeometry(1, 32,32),
       new MeshPhongMaterial( { color: 0xe74c3c }),
     );
+    planet2.position.z = 4;
 
-    planet3.position.z = 20;
-    planet3.position.x = 4;
-    this.scene.add(planet3);
-
-    const occPlanet = new Mesh(
-      new SphereBufferGeometry(1, 1,1),
-      new MeshPhongMaterial( { color: 0x000000 }),
+    const planet3 = new Mesh(
+      new SphereBufferGeometry(1, 32,32),
+      new MeshPhongMaterial( { color: 0xe74c3c }),
     );
+    planet3.position.z = 6;
 
-    occPlanet.position.z = 2;
-    //occPlanet.layers.set(this.OCCLUSION_LAYER);
-    //this.scene.add(occPlanet);
+    const planet4 = new Mesh(
+      new SphereBufferGeometry(1, 32,32),
+      new MeshPhongMaterial( { color: 0xe74c3c }),
+    );
+    planet4.position.z = 8;
 
+    this.scene.add(planet2);
+    this.scene.add(planet3);
+    this.scene.add(planet4);
 
     this.animate();
   }
@@ -421,7 +424,7 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
 
 
-
+    this.outlinePass.renderToScreen = true;
 
     //this.sceneComposer.addPass(new RenderPass(this.scene, this.camera));
 
