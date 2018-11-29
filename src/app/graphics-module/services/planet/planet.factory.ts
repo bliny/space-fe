@@ -12,9 +12,9 @@ export class PlanetFactory {
 
   base = "planets/";
   baseTexture = "/base.jpg";
-  bumpTexture = "/bump.jpg";
+  bumpTexture = "/bump.png";
   atmoTexture = "/atmo.png";
-  specularTexture = "/specular.jpg";
+  specularTexture = "/specular.png";
 
   constructor(private textureLoader: TextureLoader) {}
 
@@ -27,17 +27,20 @@ export class PlanetFactory {
     const planetTexturePath = this.base + texture;
 
     const planetMaterial = new THREE.MeshPhongMaterial({
-      map: this.textureLoader.loadTexture(planetTexturePath + this.baseTexture),
-      bumpMap: this.textureLoader.loadTexture(
-        planetTexturePath + this.bumpTexture
-      ),
-      bumpScale: 0.3,
-      specularMap: this.textureLoader.loadTexture(
-        planetTexturePath + this.specularTexture
-      ),
+      bumpScale: 0.2,
       shininess: 5,
       specular: new THREE.Color("grey")
     });
+
+    this.textureLoader
+      .loadTexture(planetTexturePath + this.baseTexture)
+      .subscribe(x => (planetMaterial.map = x));
+    this.textureLoader
+      .loadTexture(planetTexturePath + this.bumpTexture)
+      .subscribe(x => (planetMaterial.bumpMap = x));
+    this.textureLoader
+      .loadTexture(planetTexturePath + this.specularTexture)
+      .subscribe(x => (planetMaterial.specularMap = x));
 
     const planet = new THREE.Mesh(
       new THREE.SphereGeometry(planetSize, this.segments, this.rings),
@@ -46,17 +49,27 @@ export class PlanetFactory {
 
     planet.name = name;
 
-    /*const cloudMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(planetSize, this.segments, this.rings),
-      new THREE.MeshPhongMaterial({
-        map: this.textureLoader.loadTexture('ny.jpg'),
-        // side: THREE.DoubleSide,
-        //opacity: 0.5,
-        //transparent: true,
-        //depthWrite: false
-      }));
-*/
-    //planet.add(cloudMesh);
+    const cloudMaterial = new THREE.MeshPhongMaterial({
+      side: THREE.DoubleSide,
+      opacity: 0.8,
+      transparent: true,
+      depthWrite: false
+    });
+
+    const cloudMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(
+        planetSize + planetSize * 0.02,
+        this.segments,
+        this.rings
+      ),
+      cloudMaterial
+    );
+
+    this.textureLoader
+      .loadTexture(planetTexturePath + this.atmoTexture)
+      .subscribe(x => (cloudMaterial.map = x));
+
+    planet.add(cloudMesh);
 
     planet.position.x = position.x;
     planet.position.y = position.y;

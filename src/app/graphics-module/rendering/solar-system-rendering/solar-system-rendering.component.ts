@@ -2,19 +2,21 @@ import {
   AfterViewInit,
   Component,
   ElementRef,
+  EventEmitter,
   HostListener,
   OnInit,
+  Output,
   ViewChild
 } from "@angular/core";
 import { RenderingService } from "../../services/rendering-service";
 import { CameraService } from "../../services/camera-service";
 import { PlanetFactory } from "../../services/planet/planet.factory";
 import { Star, StarFactory } from "../../services/star/star.factory";
-import { ObjectLoaderService } from "../../services/object-loader/object-loader.service"
+import { ObjectLoaderService } from "../../services/object-loader/object-loader.service";
 import {
   VolumetericLightShaderService,
   VolumetericLightShaderUniform
-} from '../../services/shader/volumeteric-light-shader.service';
+} from "../../services/shader/volumeteric-light-shader.service";
 
 import {
   BlendFunction,
@@ -49,17 +51,28 @@ import {
   MeshBasicMaterial,
   MeshPhongMaterial,
   Mesh,
-  Vector2, Vector3,
+  Vector2,
+  Vector3,
   OrbitControls,
+  Color,
   ShaderGodRays,
-  LinearFilter,RGBFormat, UniformsUtils, ShaderMaterial,PlaneBufferGeometry,PointsMaterial
+  SphereGeometry,
+  LinearFilter,
+  RGBFormat,
+  UniformsUtils,
+  ShaderMaterial,
+  PlaneBufferGeometry,
+  PointsMaterial
 } from "three-full";
-import {AdditiveBlendingShaderService} from '../../services/shader/additive-blending-shader.service';
-import {OutlineShaderPassService, OutlineUniform} from '../../services/shader/outline-shader-pass';
-import {TextureLoader} from '../../services/texture/texture-loader.service';
-import {PlanetTexture} from '../../services/planet/planet-texture';
-
-
+import { AdditiveBlendingShaderService } from "../../services/shader/additive-blending-shader.service";
+import {
+  OutlineShaderPassService,
+  OutlineUniform
+} from "../../services/shader/outline-shader-pass";
+import { TextureLoader } from "../../services/texture/texture-loader.service";
+import { PlanetTexture } from "../../services/planet/planet-texture";
+import { SolarSystemObject } from "./solar-system.object";
+import { Easing, Tween, autoPlay } from "es6-tween";
 
 @Component({
   selector: "solar-system-rendering",
@@ -67,39 +80,18 @@ import {PlanetTexture} from '../../services/planet/planet-texture';
   styleUrls: ["./solar-system-rendering.component.scss"]
 })
 export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
-  geometry;
-  material;
-  uniforms;
-  cloudMesh;
-  moon;
-
+  @Output()
+  userClicked: EventEmitter<SolarSystemObject> = new EventEmitter();
 
   renderer;
   camera;
   scene: Scene;
-
   rayCaster = new Raycaster();
-  star: Star;
-  plane;
-
-  blur;
-
-  controls
-
-  // ubersun
-  DEFAULT_LAYER = 0;
-  OCCLUSION_LAYER = 1;
-
+  controls;
   lightSphere;
-  occlusionRenderTarget
-
-  private occlusionComposer: EffectComposer;
   private sceneComposer: EffectComposer;
-
   outlinePass;
   selectedObjects: Array<any>;
-
-
 
   @ViewChild("solarSystemRendering")
   solarSystemRendering: ElementRef;
@@ -108,43 +100,89 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     private renderingService: RenderingService,
     private cameraService: CameraService,
     private planetFactory: PlanetFactory,
-    private startFactory: StarFactory,
-    private objectLoader: ObjectLoaderService,
-    private additiveBlending: AdditiveBlendingShaderService,
-    private volumeLight: VolumetericLightShaderService,
     private outlinePassService: OutlineShaderPassService,
-    private textureLoader: TextureLoader,
+    private textureLoader: TextureLoader
   ) {
     this.camera = cameraService.getCamera();
     this.renderingService.getRenderer().subscribe(renderer => {
-      this.renderer = renderer;
-      this.occlusionRenderTarget = new WebGLRenderTarget(
-        window.innerWidth,
-        window.innerHeight
-      );
-      this.occlusionComposer = new EffectComposer(
-        renderer,
-        this.occlusionRenderTarget
-      );
-      this.sceneComposer = new EffectComposer(renderer);
-      this.sceneComposer.renderTarget1.stencilBuffer = true;
-      this.sceneComposer.renderTarget2.stencilBuffer = true;
-      this.scene = new Scene();
+      if (renderer) {
+        this.renderer = renderer;
 
-      this.scene.background = this.textureLoader.loadTexture('ny.jpg');
+        this.sceneComposer = new EffectComposer(renderer);
+        this.scene = new Scene();
 
-      this.selectedObjects = new Array<any>();
+        this.textureLoader
+          .loadTexture("ny.jpg")
+          .subscribe(x => (this.scene.background = x));
 
-      const outlineUniform = new OutlineUniform();
-      outlineUniform.edgeStrength = 6;
-      outlineUniform.edgeGlow = 1;
-      outlineUniform.edgeThickness =3 ;
-      outlineUniform.pulsePeriod = 2;
-      outlineUniform.visibleEdgeColor = '#ff2424';
-      outlineUniform.selectedObjectArray = this.selectedObjects;
+        this.selectedObjects = new Array<any>();
 
-      this.outlinePass = outlinePassService.createOutlineShaderPass(this.scene, this.camera, window.innerWidth,
-        window.innerHeight, outlineUniform );
+        const outlineUniform = new OutlineUniform();
+        outlineUniform.edgeStrength = 6;
+        outlineUniform.edgeGlow = 1;
+        outlineUniform.edgeThickness = 3;
+        outlineUniform.pulsePeriod = 2;
+        outlineUniform.visibleEdgeColor = "#ff2424";
+        outlineUniform.selectedObjectArray = this.selectedObjects;
+
+        this.outlinePass = outlinePassService.createOutlineShaderPass(
+          this.scene,
+          this.camera,
+          window.innerWidth,
+          window.innerHeight,
+          outlineUniform
+        );
+
+        for (let i = 0; i < 6; i++) {
+          const earth = this.planetFactory.createPlanet(
+            PlanetTexture.EARTH,
+            1,
+            new Vector3(i * 2 + 2, i * 2 + 2, 0),
+            "earth"
+          );
+          this.scene.add(earth);
+        }
+
+        const ambientLight = new AmbientLight(0x2c3e50);
+        this.scene.add(ambientLight);
+
+        const geometrySun = new SphereBufferGeometry(1, 16, 16);
+        const sunMaterial = new PointsMaterial({
+          size: 0.05,
+          sizeAttenuation: true,
+          color: 0xf20000,
+          alphaTest: 0,
+          transparent: true,
+          fog: false
+        });
+
+        this.lightSphere = new Mesh(geometrySun, sunMaterial);
+        this.scene.add(this.lightSphere);
+
+        const planet = new Mesh(
+          new SphereBufferGeometry(1, 1, 1),
+          new MeshPhongMaterial({ color: 0xe74c3c })
+        );
+        planet.position.z = 2;
+        this.scene.add(planet);
+
+        const planet2 = new Mesh(
+          new SphereBufferGeometry(1, 32, 32),
+          new MeshPhongMaterial({ color: 0xe74c3c })
+        );
+        planet2.position.z = 4;
+
+        const planet3 = new Mesh(
+          new SphereBufferGeometry(1, 32, 32),
+          new MeshPhongMaterial({ color: 0xe74c3c })
+        );
+        planet3.position.z = 6;
+
+        this.scene.add(planet2);
+        this.scene.add(planet3);
+
+        console.log("asdasd");
+      }
     });
   }
 
@@ -171,121 +209,16 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     this.controls.enableDamping = true; // Set to false to disable damping (ie inertia)
     this.controls.dampingFactor = 0.25;
     //this.controls.autoRotate=true;
-
   }
 
-  ngOnInit() {
-
-    const earth = this.planetFactory.createPlanet(
-      PlanetTexture.EARTH,
-      1,
-      new Vector3(2, 2, 2),
-      "earth"
-    );
-    this.scene.add(earth);
-
-
-/*
-    this.moon = this.planetFactory.createPlanet(
-      PlanetTexture.MOON,
-      10,
-      new THREE.Vector3(4, 4, 100),
-      "moon"
-    );
-    this.scene.add(this.earth);
-
-    this.earth.castShadow = true;
-    this.earth.receiveShadow = true;
-
-    this.moon.castShadow = true;
-    this.moon.receiveShadow = true;
-
-    //this.star = this.startFactory.createStar();
-
-    this.scene.add(this.star.light);
-    this.scene.add(this.star.object);
-
-    this.scene.add(this.moon);
-
-    const ambientLight = new THREE.AmbientLight(0xdc8874, 0.05);
-    this.scene.add(ambientLight);
-
-    this.scene.add(this.earth);
-
-    const geometry = new THREE.PlaneGeometry(1000, 1000);
-
-    const material = new THREE.MeshBasicMaterial({
-      color: 0xffff00,
-      side: THREE.DoubleSide
-    });
-    this.plane = new THREE.Mesh(geometry, material);
-
-    this.plane.rotation.x = 1.57;
-
-    this.scene.add(this.plane);
-*/
-    //this.scene.add(new THREE.AxesHelper(500));
-
-    const ambientLight = new AmbientLight(0x2c3e50);
-    this.scene.add(ambientLight);
-
-    const pointLight: any = new PointLight(0xffddaa);
-    //pointLight.position.set(40, 0, 0);
-    this.scene.add(pointLight);
-
-    const geometrySun = new SphereBufferGeometry(1, 16, 16);
-    const materialSun = new MeshBasicMaterial({ color: 0xf20000 });
-
-    const sunMaterial = new PointsMaterial({
-      size: 0.05,
-      sizeAttenuation: true,
-      color: 0xf20000,
-      alphaTest: 0,
-      transparent: true,
-      fog: false
-    });
-
-    this.lightSphere = new Mesh(geometrySun, sunMaterial);
-    this.scene.add(this.lightSphere);
-
-
-    const planet = new Mesh(
-      new SphereBufferGeometry(1, 1,1),
-      new MeshPhongMaterial( { color: 0xe74c3c }),
-    );
-    planet.position.z = 2;
-    this.scene.add(planet);
-
-    const planet2 = new Mesh(
-      new SphereBufferGeometry(1, 32,32),
-      new MeshPhongMaterial( { color: 0xe74c3c }),
-    );
-    planet2.position.z = 4;
-
-    const planet3 = new Mesh(
-      new SphereBufferGeometry(1, 32,32),
-      new MeshPhongMaterial( { color: 0xe74c3c }),
-    );
-    planet3.position.z = 6;
-
-    const planet4 = new Mesh(
-      new SphereBufferGeometry(1, 32,32),
-      new MeshPhongMaterial( { color: 0xe74c3c }),
-    );
-    planet4.position.z = 8;
-
-    this.scene.add(planet2);
-    this.scene.add(planet3);
-    this.scene.add(planet4);
-
+  async ngOnInit() {
     this.animate();
   }
 
   postProcessed = false;
   @HostListener("mousedown", ["$event"])
   onMousedown(event) {
-
-    if(this.postProcessed) {
+    if (this.postProcessed) {
       const mouse = new Vector2();
       mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -293,29 +226,78 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
       const intersects = this.rayCaster.intersectObjects(this.scene.children);
 
-      if(intersects.length > 0) {
+      if (intersects.length > 0) {
         this.outlinePass.selectedObjects.length = 0;
         this.outlinePass.selectedObjects.push(intersects[0].object);
 
-        console.log(intersects[0]);
-        console.log(this.outlinePass);
+        autoPlay(true);
+        /*
+
+
+
+          console.log(startPost);
+        const tween = new Tween(startPost)
+          .to(endPost, 5000)
+          .on('update',({x,y}) => {
+            console.log(x);
+        })
+          .easing( Easing.Sinusoidal.EaseInOut)
+
+        tween.start();
+*/
+        const startPost = {
+          x: this.camera.position.x,
+          y: this.camera.position.y,
+          z: this.camera.position.z
+        };
+
+        const endPost = {
+          x: intersects[0].object.position.x - 5,
+          y: intersects[0].object.position.y - 5,
+          z: intersects[0].object.position.z - 5
+        };
+
+        this.controls.target = intersects[0].object.position.clone();
+        this.camera.lookAt(intersects[0].object.position);
+        let coords = { x: 0, y: 0 };
+        let tween = new Tween(startPost)
+          .to(endPost, 500)
+          .on("update", ({ x, y, z }) => {
+            this.camera.position.set(x, y, z);
+          })
+          .start();
+
+        const startPost2 = {
+          x: this.controls.target.x,
+          y: this.controls.target.y,
+          z: this.controls.target.z
+        };
+
+        const endPost2 = {
+          x: intersects[0].object.position.x,
+          y: intersects[0].object.position.y,
+          z: intersects[0].object.position.z
+        };
+        let tween2 = new Tween(startPost2)
+          .to(endPost2, 500)
+          .on("update", ({ x, y, z }) => {
+            this.controls.target.set(x, y, z);
+          })
+          .start();
       }
+
+      const solarSystemObject = new SolarSystemObject();
+      solarSystemObject.clickPositionX = event.clientX;
+      solarSystemObject.clickPositionY = event.clientY;
+      this.userClicked.emit(solarSystemObject);
     }
-
-
-    if(!this.postProcessed) {
-
+    if (!this.postProcessed) {
       this.postProcess();
       this.postProcessed = true;
-
     }
-
-
-
-
-
-
   }
+
+  updateCam() {}
 
   /*
   @HostListener('mouseup')
@@ -341,190 +323,41 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
   animate() {
     requestAnimationFrame(() => this.animate());
-    // this.earth.rotation.x += 0.001;
-    //this.earth.rotation.y += 0.001;
-
-    //this.plane.rotation.x += 0.01;
-    // console.log(this.plane.rotation.x);
-    if(this.postProcessed) {
-
-     // this.camera.layers.set(this.OCCLUSION_LAYER);
-    //  this.renderer.setClearColor(0x000000);
-      //this.occlusionComposer.render();
-
-
-      //this.camera.layers.set(this.DEFAULT_LAYER);
-      //this.renderer.setClearColor(0x090611);
+    if (this.postProcessed) {
       this.sceneComposer.render();
-
-
-    }
-    if (this.blur) {
-      //this.blur.render();
-    }
-    if (this.renderer) {
-      //this.renderer.render(this.scene, this.camera);
     }
     if (this.controls) {
-      //console.log('sdasd')
       this.controls.update();
     }
   }
 
   private postProcess() {
-
-    //this.godrayPost();
-
-    const godRaysEffect = new GodRaysEffect(this.scene, this.camera, this.lightSphere, {
-      resolutionScale: 1.0,
-      kernelSize: KernelSize.SMALL,
-      density: 0.96,
-      decay: 0.93,
-      weight: 0.4,
-      exposure: 0.6,
-      samples: 60,
-      clampMax: 1.0,
-    });
+    const godRaysEffect = new GodRaysEffect(
+      this.scene,
+      this.camera,
+      this.lightSphere,
+      {
+        resolutionScale: 1.0,
+        kernelSize: KernelSize.SMALL,
+        density: 0.96,
+        decay: 0.93,
+        weight: 0.4,
+        exposure: 0.6,
+        samples: 60,
+        clampMax: 1.0
+      }
+    );
 
     godRaysEffect.dithering = false;
 
-    godRaysEffect.blendFunction  = BlendFunction.NEGATION;
-    //console.log(godRaysEffect.blendMode);
-
-
-    const uniform = new VolumetericLightShaderUniform();
-    uniform.samples = 50;
-    uniform.exposure = 0.18;
-    uniform.decay = 0.95;
-    uniform.density = 0.8;
-    uniform.weight = 0.4;
-    uniform.lightPosition = this.lightSphere.position;
-
-    // add the volumeteric shader pass that will automatically be applied
-    // to texture created by the scene render
-
-  /*  this.occlusionComposer.addPass(new RenderPass(this.scene, this.camera));
-    const pass1 = this.volumeLight.createShader(uniform);
-    pass1.needsSwap = false;
-    this.occlusionComposer.addPass(pass1);
-
-    const renderPass = new RenderPass(this.scene, this.camera);
-    this.occlusionComposer.addPass(renderPass);
-
-*/
-    console.log(this.occlusionComposer);
-
-
-
-
-
-
-    const additiveShader = this.additiveBlending.createShader(this.occlusionComposer.renderTarget1.texture);
-    additiveShader.uniforms.tAdd.value = this.occlusionComposer.renderTarget1.texture;
-
-
-
-    this.outlinePass.renderToScreen = true;
-
-    //this.sceneComposer.addPass(new RenderPass(this.scene, this.camera));
-
-
-    additiveShader.renderToScreen=true;
-
-
-
-
-    const effectFXAA = new ShaderPass( FXAAShader );
-    effectFXAA.uniforms[ 'resolution' ].value.set( 1 / window.innerWidth, 1 / window.innerHeight );
-    effectFXAA.renderToScreen = true;
-
-
-
-   // this.sceneComposer.addPass(renderPass2);
-   // this.sceneComposer.addPass(godRaysEffect);
-   // this.sceneComposer.addPass( this.outlinePass);
-
-
-    const effectPass = new EffectPass(this.camera,godRaysEffect);
+    const effectPass = new EffectPass(this.camera, godRaysEffect);
     effectPass.renderToScreen = true;
     effectPass.clear = false;
-    this.outlinePass.renderToScreen=false;
 
-    //this.sceneComposer.addPass(this.outlinePass);
+    const renderPass = new RenderPass(this.scene, this.camera);
 
-
-    const renderPass2= new RenderPass(this.scene, this.camera);
-    //renderPass2.clear = true;
-    renderPass2.renderToScreen=false;
-
-
-
-    //this.sceneComposer.addPass(renderPass2);
-    this.sceneComposer.addPass(renderPass2);
+    this.sceneComposer.addPass(renderPass);
     this.sceneComposer.addPass(this.outlinePass);
-    this.sceneComposer.addPass( effectPass );
-
-
-    //this.sceneComposer.addPass( effectFXAA );
-
-    //this.sceneComposer.addPass(renderPass2);
-    console.log(this.camera);
-  }
-
-
-
-
-
-  private godrayPost() {
-
-    const pars = { minFilter: LinearFilter, magFilter: LinearFilter, format: RGBFormat };
-    const rtTextureColors = new WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
-    const rtTextureDepth = new WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
-    const rtTextureDepthMask = new WebGLRenderTarget( window.innerWidth, window.innerHeight, pars );
-
-
-    const w = window.innerWidth / 4.0;
-    const h = window.innerHeight / 4.0;
-    const rtTextureGodRays1 = new WebGLRenderTarget( w, h, pars );
-    const rtTextureGodRays2 = new WebGLRenderTarget( w, h, pars );
-
-    const godraysMaskShader = ShaderGodRays[ "godrays_depthMask" ];
-    const godrayMaskUniforms = UniformsUtils.clone( godraysMaskShader.uniforms );
-    const materialGodraysDepthMask = new ShaderMaterial( {
-      uniforms: godrayMaskUniforms,
-      vertexShader: godraysMaskShader.vertexShader,
-      fragmentShader: godraysMaskShader.fragmentShader
-    } );
-    const godraysGenShader = ShaderGodRays[ "godrays_generate" ];
-    const godrayGenUniforms = UniformsUtils.clone( godraysGenShader.uniforms );
-    const materialGodraysGenerate = new ShaderMaterial( {
-      uniforms: godrayGenUniforms,
-      vertexShader: godraysGenShader.vertexShader,
-      fragmentShader: godraysGenShader.fragmentShader
-    } );
-    const godraysCombineShader = ShaderGodRays[ "godrays_combine" ];
-    const godrayCombineUniforms = UniformsUtils.clone( godraysCombineShader.uniforms );
-    const materialGodraysCombine = new ShaderMaterial( {
-      uniforms: godrayCombineUniforms,
-      vertexShader: godraysCombineShader.vertexShader,
-      fragmentShader: godraysCombineShader.fragmentShader
-    } );
-    const godraysFakeSunShader = ShaderGodRays[ "godrays_fake_sun" ];
-    const godraysFakeSunUniforms = UniformsUtils.clone( godraysFakeSunShader.uniforms );
-    const materialGodraysFakeSun = new ShaderMaterial( {
-      uniforms: godraysFakeSunUniforms,
-      vertexShader: godraysFakeSunShader.vertexShader,
-      fragmentShader: godraysFakeSunShader.fragmentShader
-    } );
-    godraysFakeSunUniforms.bgColor.value.setHex( 0x000511 );
-    godraysFakeSunUniforms.sunColor.value.setHex( 0xffee00 );
-    godrayCombineUniforms.fGodRayIntensity.value = 0.75;
-    const quad = new Mesh(
-      new PlaneBufferGeometry( window.innerWidth, window.innerHeight ),
-      materialGodraysGenerate
-    );
-    quad.position.z = - 9900;
-    this.scene.add( quad );
-
+    this.sceneComposer.addPass(effectPass);
   }
 }

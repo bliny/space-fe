@@ -1,12 +1,14 @@
 /* You can add global styles to this file, and also import other style files */
 html {
-  height: 98%;
-  width: 103%;
+  height: 100%;
+  width: 100%;
+  margin: 0;
 }
 
 
 
 body{
+  margin: 0;
   height: 100%;
   width: 100%;
 }
@@ -17,7 +19,7 @@ body, html {
 }
 
 .fullScreen{
-  height: 95%;
+  height: 100%;
   width: 100%;
   overflow-x: hidden;
   overflow-y: auto;

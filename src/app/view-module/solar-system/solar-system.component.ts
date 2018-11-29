@@ -1,4 +1,11 @@
-import { Component, HostListener, OnInit } from "@angular/core";
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  OnInit,
+  ViewChild
+} from "@angular/core";
+import { SolarSystemObject } from "../../graphics-module/rendering/solar-system-rendering/solar-system.object";
 
 @Component({
   selector: "solar-system-view",
@@ -6,6 +13,11 @@ import { Component, HostListener, OnInit } from "@angular/core";
   styleUrls: ["./solar-system.component.scss"]
 })
 export class SolarSystemComponent implements OnInit {
+  @ViewChild("button1")
+  button: ElementRef;
+  positionX = 0;
+  positionY = 0;
+
   constructor() {}
 
   ngOnInit() {}
@@ -13,5 +25,11 @@ export class SolarSystemComponent implements OnInit {
   test(event) {
     console.log("yee");
     event.stopPropagation();
+  }
+
+  clickEvent(event: SolarSystemObject) {
+    console.log(event);
+    this.positionX = event.clickPositionX;
+    this.positionY = event.clickPositionY;
   }
 }

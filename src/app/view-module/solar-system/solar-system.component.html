@@ -1,11 +1,7 @@
-<div class="fullScreen">
+<div class="fullScreen" >
 
-  <div class="first overLap">
-    <button (click)="test($event)"> button 1</button>
-    <button (click)="$event.stopPropagation()"> button 2</button>
-    <button (click)="$event.stopPropagation()"> button 3</button>
-    <button> button 4</button>
-  </div>
-  <solar-system-rendering></solar-system-rendering>
+  <button class="overLap" [style.top.px]="positionY" [style.left.px]="positionX" #button1 (click)="test($event)"> button 1</button>
+
+  <solar-system-rendering (userClicked)="clickEvent($event)"></solar-system-rendering>
 
 </div>
