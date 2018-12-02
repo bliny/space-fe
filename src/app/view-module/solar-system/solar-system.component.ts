@@ -6,6 +6,7 @@ import {
   ViewChild
 } from "@angular/core";
 import { SolarSystemObject } from "../../graphics-module/rendering/solar-system-rendering/solar-system.object";
+import {MarkerInfo} from '../components/object-marker/marker-info';
 
 @Component({
   selector: "solar-system-view",
@@ -18,7 +19,15 @@ export class SolarSystemComponent implements OnInit {
   positionX = 0;
   positionY = 0;
 
-  constructor() {}
+  testMarkerInfo: MarkerInfo;
+
+  constructor() {
+    this.testMarkerInfo = new MarkerInfo();
+    this.testMarkerInfo.height = 20;
+    this.testMarkerInfo.width = 20;
+    this.testMarkerInfo.positionX = 200;
+    this.testMarkerInfo.positionY = 200;
+  }
 
   ngOnInit() {}
 

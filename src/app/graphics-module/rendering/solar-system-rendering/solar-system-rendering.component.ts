@@ -3,7 +3,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  HostListener,
+  HostListener, Input,
   OnInit,
   Output,
   ViewChild
@@ -11,6 +11,7 @@ import {
 import { RenderingService } from "../../services/rendering-service";
 import { CameraService } from "../../services/camera-service";
 import { PlanetFactory } from "../../services/planet/planet.factory";
+import SpriteText from 'three-spritetext';
 import { Star, StarFactory } from "../../services/star/star.factory";
 import { ObjectLoaderService } from "../../services/object-loader/object-loader.service";
 import {
@@ -73,6 +74,7 @@ import { TextureLoader } from "../../services/texture/texture-loader.service";
 import { PlanetTexture } from "../../services/planet/planet-texture";
 import { SolarSystemObject } from "./solar-system.object";
 import { Easing, Tween, autoPlay } from "es6-tween";
+import {MarkerInfo} from '../../../view-module/components/object-marker/marker-info';
 
 @Component({
   selector: "solar-system-rendering",
@@ -82,6 +84,9 @@ import { Easing, Tween, autoPlay } from "es6-tween";
 export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   @Output()
   userClicked: EventEmitter<SolarSystemObject> = new EventEmitter();
+  @Input()
+  markerInfo: MarkerInfo;
+
 
   renderer;
   camera;
@@ -101,16 +106,23 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     private cameraService: CameraService,
     private planetFactory: PlanetFactory,
     private outlinePassService: OutlineShaderPassService,
+    private starFactory: StarFactory,
     private textureLoader: TextureLoader
   ) {
     this.camera = cameraService.getCamera();
+
+  }
+
+  ngAfterViewInit() {
+    this.controls =this.cameraService.createControls(this.camera,this.solarSystemRendering.nativeElement);
+  }
+
+  ngOnInit() {
     this.renderingService.getRenderer().subscribe(renderer => {
       if (renderer) {
         this.renderer = renderer;
-
         this.sceneComposer = new EffectComposer(renderer);
         this.scene = new Scene();
-
         this.textureLoader
           .loadTexture("ny.jpg")
           .subscribe(x => (this.scene.background = x));
@@ -143,75 +155,20 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
           this.scene.add(earth);
         }
 
-        const ambientLight = new AmbientLight(0x2c3e50);
-        this.scene.add(ambientLight);
+        const star = this.starFactory.createStar();
 
-        const geometrySun = new SphereBufferGeometry(1, 16, 16);
-        const sunMaterial = new PointsMaterial({
-          size: 0.05,
-          sizeAttenuation: true,
-          color: 0xf20000,
-          alphaTest: 0,
-          transparent: true,
-          fog: false
-        });
+        this.lightSphere = star.object;
 
-        this.lightSphere = new Mesh(geometrySun, sunMaterial);
         this.scene.add(this.lightSphere);
+        this.scene.add(star.ambientLight);
 
-        const planet = new Mesh(
-          new SphereBufferGeometry(1, 1, 1),
-          new MeshPhongMaterial({ color: 0xe74c3c })
-        );
-        planet.position.z = 2;
-        this.scene.add(planet);
-
-        const planet2 = new Mesh(
-          new SphereBufferGeometry(1, 32, 32),
-          new MeshPhongMaterial({ color: 0xe74c3c })
-        );
-        planet2.position.z = 4;
-
-        const planet3 = new Mesh(
-          new SphereBufferGeometry(1, 32, 32),
-          new MeshPhongMaterial({ color: 0xe74c3c })
-        );
-        planet3.position.z = 6;
-
-        this.scene.add(planet2);
-        this.scene.add(planet3);
 
         console.log("asdasd");
       }
     });
-  }
 
-  ngAfterViewInit() {
-    this.controls = new OrbitControls(
-      this.camera,
-      this.solarSystemRendering.nativeElement
-    );
-    this.controls.enabled = true;
-    this.controls.maxDistance = 1500;
-    this.controls.minDistance = 0;
-    this.controls.minPolarAngle = 0;
-    this.controls.maxPolarAngle = Math.PI;
 
-    // How far you can dolly in and out ( PerspectiveCamera only )
-    this.controls.minDistance = 0;
-    this.controls.maxDistance = Infinity;
 
-    this.controls.enableZoom = true; // Set to false to disable zooming
-    this.controls.zoomSpeed = 1.0;
-
-    this.controls.enablePan = true; // Set to false to disable panning (ie vertical and horizontal translations)
-
-    this.controls.enableDamping = true; // Set to false to disable damping (ie inertia)
-    this.controls.dampingFactor = 0.25;
-    //this.controls.autoRotate=true;
-  }
-
-  async ngOnInit() {
     this.animate();
   }
 

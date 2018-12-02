@@ -2,6 +2,7 @@
 
   <button class="overLap" [style.top.px]="positionY" [style.left.px]="positionX" #button1 (click)="test($event)"> button 1</button>
 
-  <solar-system-rendering (userClicked)="clickEvent($event)"></solar-system-rendering>
+  <object-marker [markerInfo]="testMarkerInfo"></object-marker>
+  <solar-system-rendering (userClicked)="clickEvent($event)" [markerInfo]="testMarkerInfo"></solar-system-rendering>
 
 </div>

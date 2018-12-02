@@ -7,10 +7,12 @@ import { PlanetTexture } from "../planet/planet-texture";
 export class Star {
   object: THREE.Mesh;
   light: THREE.PointLight;
+  ambientLight: THREE.AmbientLight;
 
-  constructor(object: THREE.Mesh, light: THREE.PointLight) {
+  constructor(object: THREE.Mesh, light: THREE.PointLight, ambientLight: THREE.AmbientLight) {
     this.object = object;
     this.light = light;
+    this.ambientLight = ambientLight;
   }
 }
 
@@ -45,13 +47,21 @@ export class StarFactory {
     shadowLight.shadow.mapSize.width = 2048;
     shadowLight.shadow.mapSize.height = 2048;
 
-    const plan = this.planetFactory.createPlanet(
-      PlanetTexture.EARTH,
-      30,
-      new THREE.Vector3(40, 40, 300),
-      "sun"
-    );
 
-    return new Star(plan, shadowLight);
+    const ambientLight = new THREE.AmbientLight(0x2c3e50);
+
+    const geometrySun = new THREE.SphereBufferGeometry(1, 16, 16);
+    const sunMaterial = new THREE.PointsMaterial({
+      size: 0.05,
+      sizeAttenuation: true,
+      color: 0xf20000,
+      alphaTest: 0,
+      transparent: true,
+      fog: false
+    });
+
+    const lightSphere = new THREE.Mesh(geometrySun, sunMaterial);
+
+    return new Star(lightSphere, shadowLight, ambientLight);
   }
 }

@@ -1,8 +1,8 @@
 import { Inject, Injectable } from "@angular/core";
-import * as THREE from "three";
 import { RenderingService, RenderingSize } from "./rendering-service";
 import {
-  PerspectiveCamera
+  PerspectiveCamera,
+  OrbitControls
 } from "three-full";
 
 @Injectable({
@@ -34,5 +34,22 @@ export class CameraService {
 
   public getCamera(): PerspectiveCamera {
     return this.camera;
+  }
+
+  public createControls(camera:PerspectiveCamera, domControlListenerElement:any):OrbitControls {
+    const controls = new OrbitControls(this.camera, domControlListenerElement);
+    controls.enabled = true;
+    controls.maxDistance = 1500;
+    controls.minDistance = 0;
+    controls.minPolarAngle = 0;
+    controls.maxPolarAngle = Math.PI;
+    controls.minDistance = 0;
+    controls.maxDistance = Infinity;
+    controls.enableZoom = true; // Set to false to disable zooming
+    controls.zoomSpeed = 1.0;
+    controls.enablePan = true; // Set to false to disable panning (ie vertical and horizontal translations)
+    controls.enableDamping = true; // Set to false to disable damping (ie inertia)
+    controls.dampingFactor = 0.25;
+    return controls;
   }
 }
