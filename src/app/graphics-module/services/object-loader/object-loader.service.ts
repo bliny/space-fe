@@ -21,7 +21,9 @@ export class ObjectLoaderService {
         materials.preload();
         objLoader.setMaterials(materials);
         objLoader.load(this.base + objName + ".obj", object => {
-          observable.next(object);
+          object.children[0].geometry.center();
+          object.children[0].name = objName;
+          observable.next(object.children[0]);
           observable.complete();
         });
       });

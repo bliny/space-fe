@@ -1,8 +1,6 @@
 import { ElementRef, Inject, Injectable } from "@angular/core";
 import { BehaviorSubject, Observable } from "rxjs";
-import {
-  WebGLRenderer
-} from "three-full";
+import { WebGLRenderer } from "three-full";
 
 export class RenderingSize {
   readonly width: number;
@@ -32,7 +30,7 @@ export class RenderingService {
     const newRenderer = new WebGLRenderer({
       canvas: canvasRef.nativeElement,
       antialias: true,
-      logarithmicDepthBuffer: true,
+      logarithmicDepthBuffer: true
       //alpha: true
     });
     newRenderer.setSize(
@@ -49,6 +47,7 @@ export class RenderingService {
   resize() {}
 
   getRenderer(): Observable<WebGLRenderer> {
+    console.log(this.renderer.getValue());
     return this.renderer.asObservable();
   }
 

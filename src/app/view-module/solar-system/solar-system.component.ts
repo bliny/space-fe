@@ -6,7 +6,9 @@ import {
   ViewChild
 } from "@angular/core";
 import { SolarSystemObject } from "../../graphics-module/rendering/solar-system-rendering/solar-system.object";
-import {MarkerInfo} from '../components/object-marker/marker-info';
+import { MarkerInfo } from "../components/object-marker/marker-info";
+import { SolarSystemResource } from "../../graphics-module/rendering/solar-system-rendering/resolver/solar-system-resource-resolver";
+import { ActivatedRoute } from "@angular/router";
 
 @Component({
   selector: "solar-system-view",
@@ -21,7 +23,7 @@ export class SolarSystemComponent implements OnInit {
 
   testMarkerInfo: MarkerInfo;
 
-  constructor() {
+  constructor(private route: ActivatedRoute) {
     this.testMarkerInfo = new MarkerInfo();
     this.testMarkerInfo.height = 20;
     this.testMarkerInfo.width = 20;
