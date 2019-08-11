@@ -5,7 +5,7 @@ import { TextureLoader } from "../texture/texture-loader.service";
 import { Observable } from "rxjs/internal/Observable";
 import { forkJoin } from "rxjs/internal/observable/forkJoin";
 import { map } from "rxjs/operators";
-import { Planet } from "../../rendering/solar-system-rendering/resolver/solar-system-resource-resolver";
+import { PlanetInfo } from "../../../control-module/services/planet-service";
 
 class TexturesForPlanets {
   base;
@@ -38,7 +38,7 @@ export class PlanetFactory {
 
   constructor(private textureLoader: TextureLoader) {}
 
-  createPlanet(planetInfo: Planet): Observable<THREE.Mesh> {
+  createPlanet(planetInfo: PlanetInfo): Observable<THREE.Mesh> {
     const planetTexturePath = this.base + planetInfo.texture;
     return forkJoin([
       this.textureLoader.loadTexture(planetTexturePath + this.baseTexture),
@@ -64,7 +64,7 @@ export class PlanetFactory {
 
   private createPlanetWithLoadedTextures(
     loadedTextures: TexturesForPlanets,
-    planetInfo: Planet
+    planetInfo: PlanetInfo
   ): THREE.Mesh {
     const planetMaterial = new THREE.MeshPhongMaterial({
       map: loadedTextures.base,
@@ -98,7 +98,7 @@ export class PlanetFactory {
   }
 
   private createCloudLayer(
-    planetInfo: Planet,
+    planetInfo: PlanetInfo,
     loadedTextures: TexturesForPlanets
   ) {
     const cloudGeometry = new THREE.SphereBufferGeometry(
@@ -117,7 +117,7 @@ export class PlanetFactory {
     return cloudMesh;
   }
 
-  private createMoon(planetInfo: Planet, moonTexture) {
+  private createMoon(planetInfo: PlanetInfo, moonTexture) {
     const moonPivot = new THREE.Object3D();
     const moonGeometry = new THREE.SphereBufferGeometry(
       planetInfo.moon.size,

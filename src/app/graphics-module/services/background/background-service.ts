@@ -2,6 +2,7 @@ import { Injectable, OnInit } from "@angular/core";
 import { TextureLoader } from "../texture/texture-loader.service";
 import { Observable } from "rxjs/internal/Observable";
 import * as THREE from "three";
+import { Background } from "../../../control-module/services/solar-system.service";
 
 @Injectable({
   providedIn: "root"
@@ -13,13 +14,13 @@ export class BackgroundService implements OnInit {
 
   ngOnInit(): void {}
 
-  createSpaceBackground(sphereSizeee: number, textureName: string) {
+  createSpaceBackground(background: Background) {
     return Observable.create(observ => {
       this.textureLoader
-        .loadTexture(this.base + textureName + ".jpg")
+        .loadTexture(this.base + background.texture + ".jpg")
         .subscribe(texture => {
           const backgroundGeometry = new THREE.SphereBufferGeometry(
-            sphereSizeee,
+            background.size,
             40,
             40
           );

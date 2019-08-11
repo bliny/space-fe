@@ -9,6 +9,7 @@ import { SolarSystemObject } from "../../graphics-module/rendering/solar-system-
 import { MarkerInfo } from "../components/object-marker/marker-info";
 import { SolarSystemResource } from "../../graphics-module/rendering/solar-system-rendering/resolver/solar-system-resource-resolver";
 import { ActivatedRoute } from "@angular/router";
+import { UserInterfaceService } from "../user-interface/user-interface.service";
 
 @Component({
   selector: "solar-system-view",
@@ -23,12 +24,15 @@ export class SolarSystemComponent implements OnInit {
 
   testMarkerInfo: MarkerInfo;
 
-  constructor(private route: ActivatedRoute) {
+  constructor(
+    private route: ActivatedRoute,
+    private userInterfaceService: UserInterfaceService
+  ) {
     this.testMarkerInfo = new MarkerInfo();
     this.testMarkerInfo.height = 20;
     this.testMarkerInfo.width = 20;
-    this.testMarkerInfo.positionX = 200;
-    this.testMarkerInfo.positionY = 200;
+    // this.testMarkerInfo.positionX = 200;
+    //this.testMarkerInfo.positionY = 200;
   }
 
   ngOnInit() {}
@@ -39,8 +43,9 @@ export class SolarSystemComponent implements OnInit {
   }
 
   clickEvent(event: SolarSystemObject) {
-    console.log(event);
-    this.positionX = event.clickPositionX;
-    this.positionY = event.clickPositionY;
+    this.userInterfaceService.setSelectedObjectInRenderer(event);
+    //console.log(event);
+    //this.positionX = event.clickPositionX;
+    //this.positionY = event.clickPositionY;
   }
 }

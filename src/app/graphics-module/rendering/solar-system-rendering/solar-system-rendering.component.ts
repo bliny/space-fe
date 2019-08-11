@@ -120,71 +120,72 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   ngAfterViewInit() {}
 
   ngOnInit() {
-    this.route.data.subscribe((data: { data: SolarSystemResource }) => {
-      this.renderer = data.data.render;
-      this.camera = data.data.camera;
+    this.route.data.subscribe(
+      (data: { solarSystemResources: SolarSystemResource }) => {
+        const solarSystemResources = data.solarSystemResources;
+        this.renderer = solarSystemResources.render;
+        this.camera = solarSystemResources.camera;
 
-      this.scene = new Scene();
+        this.scene = new Scene();
 
-      const outlineUniform = new OutlineUniform();
-      outlineUniform.edgeStrength = 6;
-      outlineUniform.edgeGlow = 1;
-      outlineUniform.edgeThickness = 3;
-      outlineUniform.pulsePeriod = 2;
-      outlineUniform.visibleEdgeColor = "#ff2424";
-      outlineUniform.selectedObjectArray = this.selectedObjects;
+        const outlineUniform = new OutlineUniform();
+        outlineUniform.edgeStrength = 6;
+        outlineUniform.edgeGlow = 1;
+        outlineUniform.edgeThickness = 3;
+        outlineUniform.pulsePeriod = 2;
+        outlineUniform.visibleEdgeColor = "#ff2424";
+        outlineUniform.selectedObjectArray = this.selectedObjects;
 
-      this.outlinePass = this.outlinePassService.createOutlineShaderPass(
-        this.scene,
-        this.camera,
-        window.innerWidth,
-        window.innerHeight,
-        outlineUniform
-      );
+        this.outlinePass = this.outlinePassService.createOutlineShaderPass(
+          this.scene,
+          this.camera,
+          window.innerWidth,
+          window.innerHeight,
+          outlineUniform
+        );
 
-      const axesHelper = new AxesHelper(400);
+        const axesHelper = new AxesHelper(400);
 
-      this.cameraService.createControls(
-        this.camera,
-        this.solarSystemRendering.nativeElement
-      );
+        this.cameraService.createControls(
+          this.camera,
+          this.solarSystemRendering.nativeElement
+        );
 
-      this.scene.add(data.data.background);
-      this.earth = data.data.earth;
-      this.lightSphere = data.data.sun.object;
-      // this.scene.add(this.lightSphere);
-      //
-      this.scene.add(data.data.sun.ambientLight);
+        this.scene.add(solarSystemResources.background);
+        this.earth = solarSystemResources.earth;
+        this.lightSphere = solarSystemResources.sun.object;
+        // this.scene.add(this.lightSphere);
+        //
+        this.scene.add(solarSystemResources.sun.ambientLight);
 
-      this.scene.add(data.data.earth);
-      this.scene.add(data.data.sun.light);
+        this.scene.add(solarSystemResources.earth);
+        this.scene.add(solarSystemResources.sun.light);
 
-      data.data.ship.position.x = 500;
+        this.ship = solarSystemResources.ship;
 
-      data.data.ship.scale.set(5, 5, 5);
-      this.ship = data.data.ship;
-      this.scene.add(data.data.ship);
+        this.scene.add(solarSystemResources.ship);
 
-      const plane111 = new THREE.Mesh(
-        new THREE.CircleBufferGeometry(1000, 15),
-        new THREE.MeshBasicMaterial({
-          color: 0x248f24,
-          alphaTest: 0,
-          visible: false,
-          side: THREE.DoubleSide
-        })
-      );
-      plane111.rotation.x = 1.5707963268;
-      plane111.name = "floor";
-      //plane111.visible = false;
-      this.scene.add(plane111);
+        const plane111 = new THREE.Mesh(
+          new THREE.CircleBufferGeometry(1000, 15),
+          new THREE.MeshBasicMaterial({
+            color: 0x248f24,
+            alphaTest: 0,
+            visible: false,
+            side: THREE.DoubleSide
+          })
+        );
+        plane111.rotation.x = 1.5707963268;
+        plane111.name = "floor";
+        //plane111.visible = false;
+        this.scene.add(plane111);
 
-      //this.scene.add( axesHelper );
+        //this.scene.add( axesHelper );
 
-      this.postProcess();
+        this.postProcess();
 
-      this.animate();
-    });
+        this.animate();
+      }
+    );
   }
 
   postProcessed = false;
@@ -206,7 +207,7 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     ) {
       this.outlinePass.setSelection([intersects[0].object]);
       //this.outlinePass.selectedObjects.push(intersects[0].object);
-      this.cameraService.moveCameraToObject(intersects[0].object);
+      //this.cameraService.moveCameraToObject(intersects[0].object);
     }
 
     console.log(intersects[0].object);
@@ -214,6 +215,7 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     const solarSystemObject = new SolarSystemObject();
     solarSystemObject.clickPositionX = event.clientX;
     solarSystemObject.clickPositionY = event.clientY;
+    //solarSystemObject.type = intersects[0].object.type;
     this.userClicked.emit(solarSystemObject);
   }
 

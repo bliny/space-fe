@@ -7,9 +7,9 @@ import { SolarSystemResourceResolver } from "./graphics-module/rendering/solar-s
 
 const routes: Routes = [
   {
-    path: "",
+    path: "solar-system/:id",
     component: SolarSystemComponent,
-    resolve: { data: SolarSystemResourceResolver }
+    resolve: { solarSystemResources: SolarSystemResourceResolver }
   }
 ];
 

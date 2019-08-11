@@ -4,6 +4,7 @@ import { TextureLoader } from "../texture/texture-loader.service";
 import { PlanetFactory } from "../planet/planet.factory";
 import { PlanetTexture } from "../planet/planet-texture";
 import { Observable } from "rxjs/internal/Observable";
+import { StarInfo } from "../../../control-module/services/star.service";
 
 export class Star {
   object: THREE.Mesh;
@@ -36,36 +37,42 @@ export class StarFactory {
 
   constructor(private textureLoader: TextureLoader) {}
 
-  createStar(): Observable<Star> {
+  createStar(starInfo: StarInfo): Observable<Star> {
     return Observable.create(obs => {
-      this.textureLoader
-        .loadTexture("stars/sun/base.jpg")
-        .subscribe(texture => {
-          const shadowLight: any = new THREE.PointLight(0xffffff, 2, 800);
-          shadowLight.position.set(40, 40, 300);
-          shadowLight.castShadow = true;
-          shadowLight.shadow.camera.left = -400;
-          shadowLight.shadow.camera.right = 400;
-          shadowLight.shadow.camera.top = 400;
-          shadowLight.shadow.camera.bottom = -400;
-          shadowLight.shadow.camera.near = 50;
-          shadowLight.shadow.camera.far = 1000;
-          shadowLight.shadow.mapSize.width = 2048;
-          shadowLight.shadow.mapSize.height = 2048;
+      this.textureLoader.loadTexture(starInfo.texture).subscribe(texture => {
+        const shadowLight: any = new THREE.PointLight(0xffffff, 2, 800);
+        shadowLight.position.set(
+          starInfo.position.x,
+          starInfo.position.y,
+          starInfo.position.z
+        );
+        shadowLight.castShadow = true;
+        shadowLight.shadow.camera.left = -400;
+        shadowLight.shadow.camera.right = 400;
+        shadowLight.shadow.camera.top = 400;
+        shadowLight.shadow.camera.bottom = -400;
+        shadowLight.shadow.camera.near = 50;
+        shadowLight.shadow.camera.far = 1000;
+        shadowLight.shadow.mapSize.width = 2048;
+        shadowLight.shadow.mapSize.height = 2048;
 
-          const ambientLight = new THREE.AmbientLight(0x2c3e50);
+        const ambientLight = new THREE.AmbientLight(0x2c3e50);
 
-          const geometrySun = new THREE.SphereBufferGeometry(150, 32, 32);
-          const sunMaterial = new THREE.PointsMaterial({
-            //size: 0.05,
-            //map: texture,
-            sizeAttenuation: true,
-            color: 0xfdb813,
-            alphaTest: 0,
-            transparent: true,
-            fog: false
-          });
-          /*
+        const geometrySun = new THREE.SphereBufferGeometry(
+          starInfo.size,
+          32,
+          32
+        );
+        const sunMaterial = new THREE.PointsMaterial({
+          //size: 0.05,
+          //map: texture,
+          sizeAttenuation: true,
+          color: 0xfdb813,
+          alphaTest: 0,
+          transparent: true,
+          fog: false
+        });
+        /*
       const planetMaterial = new THREE.MeshPhongMaterial({
         map: loadedTextures.base,
         bumpMap: loadedTextures.bump,
@@ -75,13 +82,13 @@ export class StarFactory {
         specular: new THREE.Color("grey")
       });
 */
-          const lightSphere = new THREE.Mesh(geometrySun, sunMaterial);
-          lightSphere.name = "sun";
+        const lightSphere = new THREE.Mesh(geometrySun, sunMaterial);
+        lightSphere.name = "sun";
 
-          console.log("Star");
-          obs.next(new Star(lightSphere, shadowLight, ambientLight));
-          // obs.complete();
-        });
+        console.log("Star");
+        obs.next(new Star(lightSphere, shadowLight, ambientLight));
+        // obs.complete();
+      });
     });
   }
 }
