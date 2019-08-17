@@ -1,9 +1,10 @@
 import { Injectable } from "@angular/core";
 import { PlanetTexture } from "../../graphics-module/services/planet/planet-texture";
-import { Position, SpaceObject, SpaceObjectType } from "../domail/SpaceObject";
+import { Position, SpaceObject, SpaceObjectType } from "./domail/SpaceObject";
 
 export class StarInfo extends SpaceObject {
   size: number;
+  type = SpaceObjectType.SUN;
 }
 
 @Injectable({
@@ -20,7 +21,6 @@ export class StarService {
     star1.size = 150;
     star1.texture = "stars/sun/base.jpg";
     star1.name = "sun";
-    star1.type = SpaceObjectType.SUN;
 
     this.planets.set("star1", star1);
   }

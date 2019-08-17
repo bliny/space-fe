@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
-import { ControlModule } from "../control.module";
-import { Position, SpaceObject, SpaceObjectType } from "../domail/SpaceObject";
+import { ControlModule } from "../../control-module/control.module";
+import { Position, SpaceObject, SpaceObjectType } from "./domail/SpaceObject";
 import { PlanetTexture } from "../../graphics-module/services/planet/planet-texture";
 
 export class PlanetInfo extends SpaceObject {

@@ -1,9 +1,8 @@
-import { SpaceObjectType } from "../../../control-module/domail/SpaceObject";
+import {SpaceObject, SpaceObjectType} from "../../../base-module/services/domail/SpaceObject";
 
-export class SolarSystemObject {
-  selectedObjectId: string;
+export class GameObject {
+  selectedObject: SpaceObject;
   clickedOnSameObject: boolean;
   clickPositionX: number;
   clickPositionY: number;
-  type: SpaceObjectType;
 }

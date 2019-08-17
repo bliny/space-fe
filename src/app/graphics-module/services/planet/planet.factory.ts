@@ -1,11 +1,11 @@
-import { createPlatform, Injectable } from "@angular/core";
+import { Injectable } from "@angular/core";
 import * as THREE from "three";
-import { PlanetTexture } from "./planet-texture";
 import { TextureLoader } from "../texture/texture-loader.service";
 import { Observable } from "rxjs/internal/Observable";
 import { forkJoin } from "rxjs/internal/observable/forkJoin";
 import { map } from "rxjs/operators";
-import { PlanetInfo } from "../../../control-module/services/planet-service";
+import { PlanetInfo } from "../../../base-module/services/planet-service";
+import {RenderingBase, RenderingInfo} from '../../domain/rendering-base';
 
 class TexturesForPlanets {
   base;
@@ -23,6 +23,12 @@ class TexturesForPlanets {
   }
 }
 
+export class RenderedPlanet implements RenderingBase {
+  renderingInfo: RenderingInfo;
+  objectInfo: PlanetInfo;
+}
+
+
 @Injectable({
   providedIn: "root"
 })
@@ -38,7 +44,7 @@ export class PlanetFactory {
 
   constructor(private textureLoader: TextureLoader) {}
 
-  createPlanet(planetInfo: PlanetInfo): Observable<THREE.Mesh> {
+  createPlanet(planetInfo: PlanetInfo): Observable<RenderedPlanet> {
     const planetTexturePath = this.base + planetInfo.texture;
     return forkJoin([
       this.textureLoader.loadTexture(planetTexturePath + this.baseTexture),
@@ -65,7 +71,7 @@ export class PlanetFactory {
   private createPlanetWithLoadedTextures(
     loadedTextures: TexturesForPlanets,
     planetInfo: PlanetInfo
-  ): THREE.Mesh {
+  ): RenderedPlanet {
     const planetMaterial = new THREE.MeshPhongMaterial({
       map: loadedTextures.base,
       bumpMap: loadedTextures.bump,
@@ -94,7 +100,12 @@ export class PlanetFactory {
 
     planet.name = name;
 
-    return planet;
+    const renderedPlanet = new RenderedPlanet();
+    renderedPlanet.objectInfo = planetInfo;
+    renderedPlanet.renderingInfo = new RenderingInfo();
+    renderedPlanet.renderingInfo.renderingMesh = planet;
+    renderedPlanet.renderingInfo.renderingMesh.name = planetInfo.id;
+    return renderedPlanet;
   }
 
   private createCloudLayer(
@@ -134,7 +145,7 @@ export class PlanetFactory {
     moon.position.y = planetInfo.position.y;
     moon.position.z = planetInfo.position.z;
     moon.name = "moon";
-    moon.castSha;
+    //moon.castSha;
     moonPivot.add(moon);
     return moonPivot;
   }

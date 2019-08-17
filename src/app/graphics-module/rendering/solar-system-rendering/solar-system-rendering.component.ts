@@ -9,15 +9,9 @@ import {
   Output,
   ViewChild
 } from "@angular/core";
-import { RenderingService } from "../../services/rendering-service";
-import { CameraService } from "../../services/camera-service";
-import { PlanetFactory } from "../../services/planet/planet.factory";
-import { Star, StarFactory } from "../../services/star/star.factory";
-import { ObjectLoaderService } from "../../services/object-loader/object-loader.service";
-import {
-  VolumetericLightShaderService,
-  VolumetericLightShaderUniform
-} from "../../services/shader/volumeteric-light-shader.service";
+import {CameraService} from "../../services/camera-service";
+import {RenderedPlanet} from "../../services/planet/planet.factory";
+import {RenderingStar, StarFactory} from "../../services/star/star.factory";
 import * as THREE from "three";
 import {
   BlendFunction,
@@ -68,18 +62,21 @@ import {
   PlaneGeometry,
   DoubleSide
 } from "three-full";
-import { AdditiveBlendingShaderService } from "../../services/shader/additive-blending-shader.service";
+import {AdditiveBlendingShaderService} from "../../services/shader/additive-blending-shader.service";
 import {
   OutlineShaderPassService,
   OutlineUniform
 } from "../../services/shader/outline-shader-pass";
-import { TextureLoader } from "../../services/texture/texture-loader.service";
-import { PlanetTexture } from "../../services/planet/planet-texture";
-import { SolarSystemObject } from "./solar-system.object";
-import { Easing, Tween, autoPlay } from "es6-tween";
-import { MarkerInfo } from "../../../view-module/components/object-marker/marker-info";
-import { ActivatedRoute } from "@angular/router";
-import { SolarSystemResource } from "./resolver/solar-system-resource-resolver";
+import {TextureLoader} from "../../services/texture/texture-loader.service";
+import {PlanetTexture} from "../../services/planet/planet-texture";
+import {GameObject} from "./solar-system.object";
+import {Easing, Tween, autoPlay} from "es6-tween";
+import {ActivatedRoute} from "@angular/router";
+import {SolarSystemResource} from "../../resolvers/solar-system-resource-resolver";
+import {RenderedShip} from '../../services/ship/ship.factory';
+import {ContainerFactory} from '../../services/util/container.factory';
+import {RenderingBase} from '../../domain/rendering-base';
+import {ControlService} from '../../../control-module/service/controll.service';
 
 @Component({
   selector: "solar-system-rendering",
@@ -87,10 +84,8 @@ import { SolarSystemResource } from "./resolver/solar-system-resource-resolver";
   styleUrls: ["./solar-system-rendering.component.scss"]
 })
 export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
-  @Output()
-  userClicked: EventEmitter<SolarSystemObject> = new EventEmitter();
-  @Input()
-  markerInfo: MarkerInfo;
+
+  objectContainer: Map<string, RenderingBase>;
 
   renderer;
   camera;
@@ -101,23 +96,21 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   outlinePass;
   selectedObjects = new Array<any>();
 
-  earth;
-  ship;
+  earth: RenderedPlanet;
+  ship: RenderedShip;
 
   @ViewChild("solarSystemRendering")
   solarSystemRendering: ElementRef;
 
-  constructor(
-    private renderingService: RenderingService,
-    private planetFactory: PlanetFactory,
-    private outlinePassService: OutlineShaderPassService,
-    private starFactory: StarFactory,
-    private textureLoader: TextureLoader,
-    private route: ActivatedRoute,
-    private cameraService: CameraService
-  ) {}
+  constructor(private outlinePassService: OutlineShaderPassService,
+              private route: ActivatedRoute,
+              private cameraService: CameraService,
+              private containerFactory: ContainerFactory,
+              private controlService: ControlService) {
+  }
 
-  ngAfterViewInit() {}
+  ngAfterViewInit() {
+  }
 
   ngOnInit() {
     this.route.data.subscribe(
@@ -153,17 +146,17 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
         this.scene.add(solarSystemResources.background);
         this.earth = solarSystemResources.earth;
-        this.lightSphere = solarSystemResources.sun.object;
+        this.lightSphere = solarSystemResources.sun.renderingInfo.renderingObject;
         // this.scene.add(this.lightSphere);
         //
-        this.scene.add(solarSystemResources.sun.ambientLight);
+        this.scene.add(solarSystemResources.sun.renderingInfo.ambientLight);
 
-        this.scene.add(solarSystemResources.earth);
-        this.scene.add(solarSystemResources.sun.light);
+        this.scene.add(solarSystemResources.earth.renderingInfo.renderingMesh);
+        this.scene.add(solarSystemResources.sun.renderingInfo.light);
 
         this.ship = solarSystemResources.ship;
 
-        this.scene.add(solarSystemResources.ship);
+        this.scene.add(solarSystemResources.ship.renderingInfo.renderingObject);
 
         const plane111 = new THREE.Mesh(
           new THREE.CircleBufferGeometry(1000, 15),
@@ -181,6 +174,9 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
         //this.scene.add( axesHelper );
 
+        this.objectContainer = this.containerFactory.generateRenderingObjectContainer(solarSystemResources);
+        console.log(this.objectContainer);
+
         this.postProcess();
 
         this.animate();
@@ -189,8 +185,10 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   }
 
   postProcessed = false;
+
   @HostListener("mousedown", ["$event"])
   onMousedown(event) {
+    console.log('yolo')
     const mouse = new Vector2();
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -200,48 +198,51 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
     //this.outlinePass.selectedObjects.length = 0;
     if (
-      intersects.length > 0 &&
-      intersects[0].object.name !== "sun" &&
-      intersects[0].object.name !== "background" &&
-      intersects[0].object.name !== "floor"
+      intersects.length > 0 && intersects[0].object.name !== 'floor' && intersects[0].object.name !== 'background'
+
     ) {
+
       this.outlinePass.setSelection([intersects[0].object]);
+
+      const solarSystemObject = new GameObject();
+      solarSystemObject.clickPositionX = event.clientX;
+      solarSystemObject.clickPositionY = event.clientY;
+      solarSystemObject.selectedObject = this.objectContainer.get(intersects[0].object.name).objectInfo;
+      this.controlService.setClickedOnGameObject(solarSystemObject);
+
       //this.outlinePass.selectedObjects.push(intersects[0].object);
       //this.cameraService.moveCameraToObject(intersects[0].object);
     }
 
-    console.log(intersects[0].object);
 
-    const solarSystemObject = new SolarSystemObject();
-    solarSystemObject.clickPositionX = event.clientX;
-    solarSystemObject.clickPositionY = event.clientY;
-    //solarSystemObject.type = intersects[0].object.type;
-    this.userClicked.emit(solarSystemObject);
+
+    //this.userClicked.emit(solarSystemObject);
   }
 
-  updateCam() {}
+  updateCam() {
+  }
 
   /*
-  @HostListener('mouseup')
-  onMouseup() {
-  }
+   @HostListener('mouseup')
+   onMouseup() {
+   }
 
-  @HostListener('mousemove', ['$event'])
-  onMousemove(event: MouseEvent) {
-  }
+   @HostListener('mousemove', ['$event'])
+   onMousemove(event: MouseEvent) {
+   }
 
 
 
-  @HostListener('mousewheel', ['$event'])
-  onMousewheel(event) {
-    this.camera.position.z += event.deltaY/10;
-  }
+   @HostListener('mousewheel', ['$event'])
+   onMousewheel(event) {
+   this.camera.position.z += event.deltaY/10;
+   }
 
-  @HostListener('change', ['$event'])
-  onChangEvent(event) {
-    console.log(event);
-  }
-*/
+   @HostListener('change', ['$event'])
+   onChangEvent(event) {
+   console.log(event);
+   }
+   */
 
   animate() {
     requestAnimationFrame(() => this.animate());
@@ -250,14 +251,14 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
 
     const time = Date.now() * 0.0005;
     /* this.earth.children[0].position.x = Math.cos( time * 10 ) * 5;
-    this.earth.children[0].position.y = Math.cos( time * 7 ) * 3;
-    this.earth.children[0].position.z = Math.cos( time * 8 ) * 4;*/
+     this.earth.children[0].position.y = Math.cos( time * 7 ) * 3;
+     this.earth.children[0].position.z = Math.cos( time * 8 ) * 4;*/
     //this.earth.children[0].translate(0, Math.cos(  7 ) * 3, 0)
 
-    this.earth.children[0].rotation.y += 0.005;
-    this.earth.children[1].rotation.y += 0.0001;
+    this.earth.renderingInfo.renderingMesh.children[0].rotation.y += 0.005;
+    this.earth.renderingInfo.renderingMesh.children[1].rotation.y += 0.0001;
 
-    this.earth.rotation.y += 0.00005;
+    this.earth.renderingInfo.renderingMesh.rotation.y += 0.00005;
   }
 
   private postProcess() {

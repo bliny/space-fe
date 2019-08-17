@@ -1,34 +1,29 @@
-import { Resolver } from "@angular/core/testing/src/resolvers";
 import { Injectable } from "@angular/core";
-import { RenderingService } from "../../../services/rendering-service";
-import { CameraService } from "../../../services/camera-service";
-import { PlanetFactory } from "../../../services/planet/planet.factory";
-import { Star, StarFactory } from "../../../services/star/star.factory";
+import { RenderingService } from "../services/rendering-service";
+import { CameraService } from "../services/camera-service";
+import {PlanetFactory, RenderedPlanet} from "../services/planet/planet.factory";
+import {RenderingStar, StarFactory} from "../services/star/star.factory";
 import { ActivatedRouteSnapshot, Resolve } from "@angular/router";
 import { forkJoin } from "rxjs/internal/observable/forkJoin";
 import { map, take, first, mergeMap } from "rxjs/operators";
 import { Observable } from "rxjs/internal/Observable";
-import { PlanetTexture } from "../../../services/planet/planet-texture";
 import { Vector3 } from "three-full";
-import { BackgroundService } from "../../../services/background/background-service";
-import { ObjectLoaderService } from "../../../services/object-loader/object-loader.service";
-import { PlanetInfo } from "../../../../control-module/services/planet-service";
-import { SpaceObjectType } from "../../../../control-module/domail/SpaceObject";
+import { BackgroundService } from "../services/background/background-service";
 import {
   SolarSystemInfo,
   SolarSystemService
-} from "../../../../control-module/services/solar-system.service";
-import { ShipFactory } from "../../../services/ship/ship.factory";
+} from "../../base-module/services/solar-system.service";
+import {RenderedShip, ShipFactory} from "../services/ship/ship.factory";
 
 export class SolarSystemResource {
   render;
   camera;
-  sun: Star;
-  earth;
+  sun: RenderingStar;
+  earth: RenderedPlanet;
   background;
-  ship;
+  ship: RenderedShip;
 
-  constructor(render, camera, sun, earth, background, ship) {
+  constructor(render, camera, sun:RenderingStar, earth: RenderedPlanet, background, ship: RenderedShip) {
     this.render = render;
     this.sun = sun;
     this.earth = earth;
@@ -72,8 +67,7 @@ export class SolarSystemResourceResolver
               .createSpaceBackground(solarSystem.background)
               .pipe(first())
           ]).pipe(
-            map(([renderer, camera, star, createdPlanet, ship, background]) => {
-              console.log("yolo");
+            map(([renderer, camera, star, createdPlanet , ship, background]) => {
               const o = new SolarSystemResource(
                 renderer,
                 camera,
@@ -82,7 +76,6 @@ export class SolarSystemResourceResolver
                 background,
                 ship
               );
-              console.log(o);
               return o;
             })
           );

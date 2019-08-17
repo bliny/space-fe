@@ -1,12 +1,13 @@
 import { Injectable } from "@angular/core";
-import { ControlModule } from "../control.module";
-import { Position, SpaceObject } from "../domail/SpaceObject";
+import { ControlModule } from "../../control-module/control.module";
+import {Position, SpaceObject, SpaceObjectType} from "./domail/SpaceObject";
 import { PlanetInfo } from "./planet-service";
 
 export class ShipInfo extends SpaceObject {
   speed: number;
   mtlName: string;
   objName: string;
+  type = SpaceObjectType.SHIP;
 }
 
 @Injectable({

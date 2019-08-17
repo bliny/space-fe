@@ -1,7 +1,9 @@
-import { Component, OnInit } from "@angular/core";
-import { UserInterfaceService } from "./user-interface.service";
-import { SolarSystemObject } from "../../graphics-module/rendering/solar-system-rendering/solar-system.object";
-import { SpaceObjectType } from "../../control-module/domail/SpaceObject";
+import {ChangeDetectorRef, Component, OnInit} from "@angular/core";
+import {UserInterfaceService} from "./user-interface.service";
+import {SpaceObjectType} from "../../base-module/services/domail/SpaceObject";
+import {GameObject} from '../../graphics-module/rendering/solar-system-rendering/solar-system.object';
+import {ControlService} from '../../control-module/service/controll.service';
+
 
 @Component({
   selector: "user-interface",
@@ -9,19 +11,31 @@ import { SpaceObjectType } from "../../control-module/domail/SpaceObject";
   styleUrls: ["./user-interface.component.scss"]
 })
 export class UserInterfaceComponent implements OnInit {
-  selectedObject: SolarSystemObject;
 
-  constructor(private userInterfaceService: UserInterfaceService) {}
+  gameObject: GameObject;
+
+  constructor(private controlService: ControlService,
+  private changeDetectod: ChangeDetectorRef) {
+  }
 
   ngOnInit() {
-    this.userInterfaceService
-      .$subscribeObjectSelection()
-      .subscribe(selecteObject => (this.selectedObject = selecteObject));
+    this.controlService
+      .$subscribeClickedOnGameObject()
+      .subscribe((selecteObject: GameObject) => {
+        this.gameObject = selecteObject;
+        console.log(selecteObject);
+        this.changeDetectod.detectChanges();
+      });
+
   }
 
-  isShipSelected() {
-    return (
-      this.selectedObject && this.selectedObject.type === SpaceObjectType.SHIP
-    );
+  isPlanetSelected(): boolean {
+    //console.log(this.gameObject && this.gameObject.selectedObject.type === SpaceObjectType.PLANET);
+    return this.gameObject && this.gameObject.selectedObject.type === SpaceObjectType.PLANET;
   }
+
+  isShipSelected(): boolean {
+    return this.gameObject && this.gameObject.selectedObject.type === SpaceObjectType.SHIP;
+  }
+
 }

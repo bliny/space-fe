@@ -5,9 +5,8 @@ import {
   OnInit,
   ViewChild
 } from "@angular/core";
-import { SolarSystemObject } from "../../graphics-module/rendering/solar-system-rendering/solar-system.object";
 import { MarkerInfo } from "../components/object-marker/marker-info";
-import { SolarSystemResource } from "../../graphics-module/rendering/solar-system-rendering/resolver/solar-system-resource-resolver";
+import { SolarSystemResource } from "../../graphics-module/resolvers/solar-system-resource-resolver";
 import { ActivatedRoute } from "@angular/router";
 import { UserInterfaceService } from "../user-interface/user-interface.service";
 
@@ -42,10 +41,5 @@ export class SolarSystemComponent implements OnInit {
     event.stopPropagation();
   }
 
-  clickEvent(event: SolarSystemObject) {
-    this.userInterfaceService.setSelectedObjectInRenderer(event);
-    //console.log(event);
-    //this.positionX = event.clickPositionX;
-    //this.positionY = event.clickPositionY;
-  }
+
 }

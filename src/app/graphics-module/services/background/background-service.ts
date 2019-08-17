@@ -2,7 +2,7 @@ import { Injectable, OnInit } from "@angular/core";
 import { TextureLoader } from "../texture/texture-loader.service";
 import { Observable } from "rxjs/internal/Observable";
 import * as THREE from "three";
-import { Background } from "../../../control-module/services/solar-system.service";
+import { Background } from "../../../base-module/services/solar-system.service";
 
 @Injectable({
   providedIn: "root"

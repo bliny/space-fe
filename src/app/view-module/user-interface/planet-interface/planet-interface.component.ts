@@ -1,5 +1,5 @@
 import { Component, OnInit } from "@angular/core";
-import { PlanetService } from "../../../control-module/services/planet-service";
+import { PlanetService } from "../../../base-module/services/planet-service";
 
 @Component({
   selector: "planet-interface",
@@ -9,5 +9,7 @@ import { PlanetService } from "../../../control-module/services/planet-service";
 export class PlanetInterfaceComponent implements OnInit {
   constructor(private planetService: PlanetService) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    console.log('planet')
+  }
 }

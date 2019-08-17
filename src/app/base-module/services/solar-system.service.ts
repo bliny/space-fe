@@ -3,7 +3,7 @@ import { ShipInfo, ShipService } from "./ship-service";
 import { PlanetInfo, PlanetService } from "./planet-service";
 import { Observable } from "rxjs/internal/Observable";
 import { PlanetTexture } from "../../graphics-module/services/planet/planet-texture";
-import { SpaceObjectType } from "../domail/SpaceObject";
+import { SpaceObjectType } from "./domail/SpaceObject";
 import { StarInfo, StarService } from "./star.service";
 
 export class SolarSystemInfo {

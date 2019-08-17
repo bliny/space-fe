@@ -1,13 +1,16 @@
 import { NgModule } from "@angular/core";
 import { Routes, RouterModule } from "@angular/router";
 import { SolarSystemComponent } from "./view-module/solar-system/solar-system.component";
-import { RenderingBaseComponent } from "./graphics-module/rendering/rendering-base/rendering-base.component";
-import { SolarSystemRenderingComponent } from "./graphics-module/rendering/solar-system-rendering/solar-system-rendering.component";
-import { SolarSystemResourceResolver } from "./graphics-module/rendering/solar-system-rendering/resolver/solar-system-resource-resolver";
+import { SolarSystemResourceResolver } from "./graphics-module/resolvers/solar-system-resource-resolver";
 
 const routes: Routes = [
   {
-    path: "solar-system/:id",
+    path: '',
+    redirectTo: 'solar-system/1',
+    pathMatch: 'full'
+  },
+  {
+    path: 'solar-system/:id',
     component: SolarSystemComponent,
     resolve: { solarSystemResources: SolarSystemResourceResolver }
   }

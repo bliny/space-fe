@@ -1,25 +1,13 @@
-import { createPlatform, Injectable } from "@angular/core";
+import {createPlatform, Injectable} from "@angular/core";
 import * as THREE from "three";
-import { TextureLoader } from "../texture/texture-loader.service";
-import { PlanetFactory } from "../planet/planet.factory";
-import { PlanetTexture } from "../planet/planet-texture";
-import { Observable } from "rxjs/internal/Observable";
-import { StarInfo } from "../../../control-module/services/star.service";
+import {TextureLoader} from "../texture/texture-loader.service";
+import {Observable} from "rxjs/internal/Observable";
+import {StarInfo} from "../../../base-module/services/star.service";
+import {RenderingBase, RenderingInfo} from '../../domain/rendering-base';
 
-export class Star {
-  object: THREE.Mesh;
-  light: THREE.PointLight;
-  ambientLight: THREE.AmbientLight;
-
-  constructor(
-    object: THREE.Mesh,
-    light: THREE.PointLight,
-    ambientLight: THREE.AmbientLight
-  ) {
-    this.object = object;
-    this.light = light;
-    this.ambientLight = ambientLight;
-  }
+export class RenderingStar implements RenderingBase {
+  renderingInfo: RenderingInfo;
+  objectInfo: StarInfo;
 }
 
 @Injectable({
@@ -35,9 +23,10 @@ export class StarFactory {
   atmoTexture = "/atmo.png";
   specularTexture = "/specular.jpg";
 
-  constructor(private textureLoader: TextureLoader) {}
+  constructor(private textureLoader: TextureLoader) {
+  }
 
-  createStar(starInfo: StarInfo): Observable<Star> {
+  createStar(starInfo: StarInfo): Observable<RenderingStar> {
     return Observable.create(obs => {
       this.textureLoader.loadTexture(starInfo.texture).subscribe(texture => {
         const shadowLight: any = new THREE.PointLight(0xffffff, 2, 800);
@@ -73,20 +62,25 @@ export class StarFactory {
           fog: false
         });
         /*
-      const planetMaterial = new THREE.MeshPhongMaterial({
-        map: loadedTextures.base,
-        bumpMap: loadedTextures.bump,
-        bumpScale: 0.8,
-        specularMap: loadedTextures.spec,
-        shininess: 5,
-        specular: new THREE.Color("grey")
-      });
-*/
+         const planetMaterial = new THREE.MeshPhongMaterial({
+         map: loadedTextures.base,
+         bumpMap: loadedTextures.bump,
+         bumpScale: 0.8,
+         specularMap: loadedTextures.spec,
+         shininess: 5,
+         specular: new THREE.Color("grey")
+         });
+         */
         const lightSphere = new THREE.Mesh(geometrySun, sunMaterial);
-        lightSphere.name = "sun";
+        lightSphere.name = starInfo.id;
 
-        console.log("Star");
-        obs.next(new Star(lightSphere, shadowLight, ambientLight));
+        const star = new RenderingStar();
+        star.renderingInfo = new RenderingInfo();
+        star.renderingInfo.renderingObject = lightSphere;
+        star.renderingInfo.light = shadowLight;
+        star.renderingInfo.ambientLight = ambientLight;
+        star.objectInfo = starInfo;
+        obs.next(star);
         // obs.complete();
       });
     });

@@ -1,10 +1,19 @@
 import { Injectable } from "@angular/core";
 import { ObjectLoaderService } from "../object-loader/object-loader.service";
-import { ShipInfo } from "../../../control-module/services/ship-service";
+import { ShipInfo } from "../../../base-module/services/ship-service";
 import { first, map } from "rxjs/operators";
 
-import * as THREE from "three";
+import {Object3D, Mesh} from "three";
+
 import { Observable } from "rxjs/index";
+import {RenderingBase, RenderingInfo} from '../../domain/rendering-base';
+
+
+export class RenderedShip implements RenderingBase{
+  objectInfo: ShipInfo;
+  renderingInfo: RenderingInfo;
+}
+
 
 @Injectable({
   providedIn: "root"
@@ -12,12 +21,18 @@ import { Observable } from "rxjs/index";
 export class ShipFactory {
   constructor(private objectLoader: ObjectLoaderService) {}
 
-  createShip(ship: ShipInfo): Observable<THREE.Object3D> {
+  createShip(ship: ShipInfo): Observable<RenderedShip> {
     return this.objectLoader.loadObject(ship.mtlName, ship.objName).pipe(
       map(loadedObject => {
         loadedObject.position.x = ship.position.x;
         loadedObject.scale.set(5, 5, 5);
-        return loadedObject;
+        loadedObject.name = ship.id;
+        const renderedShip = new RenderedShip();
+        const renderingInfo = new RenderingInfo();
+        renderingInfo.renderingObject = loadedObject;
+        renderedShip.objectInfo = ship;
+        renderedShip.renderingInfo = renderingInfo;
+        return renderedShip;
       })
     );
   }
