@@ -5,7 +5,8 @@ import { Observable } from "rxjs/internal/Observable";
 import { forkJoin } from "rxjs/internal/observable/forkJoin";
 import { map } from "rxjs/operators";
 import { PlanetInfo } from "../../../base-module/services/planet-service";
-import {RenderingBase, RenderingInfo} from '../../domain/rendering-base';
+import {RenderingInfo} from '../../domain/rendering-base';
+import {RenderedPlanet} from './rendered-planet';
 
 class TexturesForPlanets {
   base;
@@ -22,12 +23,6 @@ class TexturesForPlanets {
     this.moon = moon;
   }
 }
-
-export class RenderedPlanet implements RenderingBase {
-  renderingInfo: RenderingInfo;
-  objectInfo: PlanetInfo;
-}
-
 
 @Injectable({
   providedIn: "root"

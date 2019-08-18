@@ -1,5 +1,5 @@
 
 <div class="ui base-top-padding overLap">
-  <ship-interface *ngIf="isShipSelected()"></ship-interface>
-  <planet-interface *ngIf="isPlanetSelected()"></planet-interface>
+  <ship-interface *ngIf="isShipSelected()" [shipInfo]="gameObject.selectedObject"></ship-interface>
+  <planet-interface *ngIf="isPlanetSelected()" [planetInfo]="gameObject.selectedObject"></planet-interface>
 </div>

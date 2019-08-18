@@ -1,14 +1,12 @@
-import {createPlatform, Injectable} from "@angular/core";
+import { Injectable} from "@angular/core";
 import * as THREE from "three";
 import {TextureLoader} from "../texture/texture-loader.service";
 import {Observable} from "rxjs/internal/Observable";
 import {StarInfo} from "../../../base-module/services/star.service";
-import {RenderingBase, RenderingInfo} from '../../domain/rendering-base';
+import {RenderingInfo} from '../../domain/rendering-base';
+import {RenderingStar} from './rendering-star';
 
-export class RenderingStar implements RenderingBase {
-  renderingInfo: RenderingInfo;
-  objectInfo: StarInfo;
-}
+
 
 @Injectable({
   providedIn: "root"

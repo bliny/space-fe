@@ -4,6 +4,8 @@ import {SpaceObject} from '../../base-module/services/domail/SpaceObject';
 export interface RenderingBase{
   objectInfo: SpaceObject;
   renderingInfo: RenderingInfo;
+
+  animate(time:number);
 }
 
 export class RenderingInfo{

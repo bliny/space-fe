@@ -1,8 +1,8 @@
 import { Injectable } from "@angular/core";
 import { RenderingService } from "../services/rendering-service";
 import { CameraService } from "../services/camera-service";
-import {PlanetFactory, RenderedPlanet} from "../services/planet/planet.factory";
-import {RenderingStar, StarFactory} from "../services/star/star.factory";
+import {PlanetFactory} from "../services/planet/planet.factory";
+import { StarFactory} from "../services/star/star.factory";
 import { ActivatedRouteSnapshot, Resolve } from "@angular/router";
 import { forkJoin } from "rxjs/internal/observable/forkJoin";
 import { map, take, first, mergeMap } from "rxjs/operators";
@@ -13,7 +13,10 @@ import {
   SolarSystemInfo,
   SolarSystemService
 } from "../../base-module/services/solar-system.service";
-import {RenderedShip, ShipFactory} from "../services/ship/ship.factory";
+import { ShipFactory} from "../services/ship/ship.factory";
+import {RenderingStar} from '../services/star/rendering-star';
+import {RenderedPlanet} from '../services/planet/rendered-planet';
+import {RenderedShip} from '../services/ship/rendering-ship';
 
 export class SolarSystemResource {
   render;

@@ -10,8 +10,6 @@ import {
   ViewChild
 } from "@angular/core";
 import {CameraService} from "../../services/camera-service";
-import {RenderedPlanet} from "../../services/planet/planet.factory";
-import {RenderingStar, StarFactory} from "../../services/star/star.factory";
 import * as THREE from "three";
 import {
   BlendFunction,
@@ -73,10 +71,11 @@ import {GameObject} from "./solar-system.object";
 import {Easing, Tween, autoPlay} from "es6-tween";
 import {ActivatedRoute} from "@angular/router";
 import {SolarSystemResource} from "../../resolvers/solar-system-resource-resolver";
-import {RenderedShip} from '../../services/ship/ship.factory';
 import {ContainerFactory} from '../../services/util/container.factory';
 import {RenderingBase} from '../../domain/rendering-base';
 import {ControlService} from '../../../control-module/service/controll.service';
+import {RenderedPlanet} from '../../services/planet/rendered-planet';
+import {RenderedShip} from '../../services/ship/rendering-ship';
 
 @Component({
   selector: "solar-system-rendering",
@@ -110,6 +109,17 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
+    this.controlService.$subscribeFocusObject().subscribe((objectId: string) => {
+      const objectToFocusOn = this.objectContainer.get(objectId);
+      if(objectToFocusOn){
+        console.log(objectToFocusOn);
+        if(objectToFocusOn.renderingInfo.renderingMesh) {
+          this.cameraService.moveCameraToObject(objectToFocusOn.renderingInfo.renderingMesh);
+        }else{
+          this.cameraService.moveCameraToObject(objectToFocusOn.renderingInfo.renderingObject);
+        }
+      }
+    })
   }
 
   ngOnInit() {
@@ -215,7 +225,6 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
     }
 
 
-
     //this.userClicked.emit(solarSystemObject);
   }
 
@@ -254,11 +263,7 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
      this.earth.children[0].position.y = Math.cos( time * 7 ) * 3;
      this.earth.children[0].position.z = Math.cos( time * 8 ) * 4;*/
     //this.earth.children[0].translate(0, Math.cos(  7 ) * 3, 0)
-
-    this.earth.renderingInfo.renderingMesh.children[0].rotation.y += 0.005;
-    this.earth.renderingInfo.renderingMesh.children[1].rotation.y += 0.0001;
-
-    this.earth.renderingInfo.renderingMesh.rotation.y += 0.00005;
+    this.earth.animate(time);
   }
 
   private postProcess() {

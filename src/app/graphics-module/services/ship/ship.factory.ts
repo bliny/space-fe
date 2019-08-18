@@ -6,13 +6,8 @@ import { first, map } from "rxjs/operators";
 import {Object3D, Mesh} from "three";
 
 import { Observable } from "rxjs/index";
-import {RenderingBase, RenderingInfo} from '../../domain/rendering-base';
-
-
-export class RenderedShip implements RenderingBase{
-  objectInfo: ShipInfo;
-  renderingInfo: RenderingInfo;
-}
+import { RenderingInfo} from '../../domain/rendering-base';
+import {RenderedShip} from './rendering-ship';
 
 
 @Injectable({
