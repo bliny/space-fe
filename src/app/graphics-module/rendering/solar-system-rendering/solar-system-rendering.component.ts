@@ -60,7 +60,6 @@ import {
   PlaneGeometry,
   DoubleSide
 } from "three-full";
-import {AdditiveBlendingShaderService} from "../../services/shader/additive-blending-shader.service";
 import {
   OutlineShaderPassService,
   OutlineUniform
@@ -197,32 +196,32 @@ export class SolarSystemRenderingComponent implements OnInit, AfterViewInit {
   postProcessed = false;
 
   @HostListener("mousedown", ["$event"])
-  onMousedown(event) {
-    console.log('yolo')
-    const mouse = new Vector2();
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-    this.rayCaster.setFromCamera(mouse, this.camera);
+    onMousedown(event) {
+      console.log('yolo')
+      const mouse = new Vector2();
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      this.rayCaster.setFromCamera(mouse, this.camera);
 
-    const intersects = this.rayCaster.intersectObjects(this.scene.children);
+      const intersects = this.rayCaster.intersectObjects(this.scene.children);
 
-    //this.outlinePass.selectedObjects.length = 0;
-    if (
-      intersects.length > 0 && intersects[0].object.name !== 'floor' && intersects[0].object.name !== 'background'
+      //this.outlinePass.selectedObjects.length = 0;
+      if (
+        intersects.length > 0 && intersects[0].object.name !== 'floor' && intersects[0].object.name !== 'background'
 
-    ) {
+      ) {
 
-      this.outlinePass.setSelection([intersects[0].object]);
+        this.outlinePass.setSelection([intersects[0].object]);
 
-      const solarSystemObject = new GameObject();
-      solarSystemObject.clickPositionX = event.clientX;
-      solarSystemObject.clickPositionY = event.clientY;
-      solarSystemObject.selectedObject = this.objectContainer.get(intersects[0].object.name).objectInfo;
-      this.controlService.setClickedOnGameObject(solarSystemObject);
+        const solarSystemObject = new GameObject();
+        solarSystemObject.clickPositionX = event.clientX;
+        solarSystemObject.clickPositionY = event.clientY;
+        solarSystemObject.selectedObject = this.objectContainer.get(intersects[0].object.name).objectInfo;
+        this.controlService.setClickedOnGameObject(solarSystemObject);
 
-      //this.outlinePass.selectedObjects.push(intersects[0].object);
-      //this.cameraService.moveCameraToObject(intersects[0].object);
-    }
+        //this.outlinePass.selectedObjects.push(intersects[0].object);
+        //this.cameraService.moveCameraToObject(intersects[0].object);
+      }
 
 
     //this.userClicked.emit(solarSystemObject);
