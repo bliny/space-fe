@@ -3,6 +3,7 @@ import {CameraService} from '../../services/camera-service';
 
 import * as THREE from "three-full";
 import {RenderingService} from '../../services/rendering-service';
+import {HexFieldFactory} from '../../services/board/hex/hex-field.factory';
 
 @Component({
   selector: 'battle-field-rendering',
@@ -20,13 +21,14 @@ export class BattleFieldRenderingComponent implements OnInit {
   composer;
   rayCaster = new THREE.Raycaster();
 
-  constructor(
-    private readonly cameraService: CameraService,
-    private readonly rendererService: RenderingService) { }
+  constructor(private readonly cameraService: CameraService,
+              private readonly rendererService: RenderingService,
+              private readonly hexFieldFactory: HexFieldFactory) {
+  }
 
   ngOnInit() {
     this.scene = new THREE.Scene();
-    this.cameraService.getCamera().subscribe( camera => {
+    this.cameraService.getCamera().subscribe(camera => {
       this.camera = camera;
 
       this.cameraService.createControls(
@@ -34,33 +36,33 @@ export class BattleFieldRenderingComponent implements OnInit {
         this.battlefieldRendering.nativeElement
       );
 
-      this.rendererService.getRenderer().subscribe( renderer => {
+      this.rendererService.getRenderer().subscribe(renderer => {
         this.renderer = renderer;
 
-        const geometry = new THREE.PlaneGeometry( 5, 20, 32 );
-        const material = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-        const plane = new THREE.Mesh( geometry, material );
+        const geometry = new THREE.PlaneGeometry(5, 20, 32);
+        const material = new THREE.MeshBasicMaterial({color: 0xffff00, side: THREE.DoubleSide});
+        const plane = new THREE.Mesh(geometry, material);
 
-        var material2 = new THREE.MeshPhongMaterial( {
+        var material2 = new THREE.MeshPhongMaterial({
           color: 0xff0000,
           polygonOffset: true,
           polygonOffsetFactor: 1, // positive value pushes polygon further away
           polygonOffsetUnits: 1
-        } );
-        var mesh2 = new THREE.Mesh( geometry, material2 );
-        this.scene.add( mesh2 )
+        });
+        var mesh2 = new THREE.Mesh(geometry, material2);
+        this.scene.add(mesh2)
 
 // wireframe
-        var geo2 = new THREE.EdgesGeometry( mesh2.geometry ); // or WireframeGeometry
-        var mat2 = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 80 } );
-        var wireframe2 = new THREE.LineSegments( geo2, mat2 );
-        mesh2.add( wireframe2 );
+        var geo2 = new THREE.EdgesGeometry(mesh2.geometry); // or WireframeGeometry
+        var mat2 = new THREE.LineBasicMaterial({color: 0xffffff, linewidth: 80});
+        var wireframe2 = new THREE.LineSegments(geo2, mat2);
+        mesh2.add(wireframe2);
 
 
         const renderScene = new THREE.RenderPass(this.scene, this.camera);
 
         var effectFXAA = new THREE.ShaderPass(THREE.FXAAShader);
-        effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight );
+        effectFXAA.uniforms['resolution'].value.set(1 / window.innerWidth, 1 / window.innerHeight);
 
         var copyShader = new THREE.ShaderPass(THREE.CopyShader);
         copyShader.renderToScreen = true;
@@ -69,7 +71,7 @@ export class BattleFieldRenderingComponent implements OnInit {
         var bloomStrength = 2;
         var bloomRadius = 0;
         var bloomThreshold = 0.1;
-        var bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(10, 10), 			bloomStrength, bloomRadius, bloomThreshold);
+        var bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(10, 10), bloomStrength, bloomRadius, bloomThreshold);
 
         this.composer = new THREE.EffectComposer(this.renderer);
 
@@ -83,52 +85,16 @@ export class BattleFieldRenderingComponent implements OnInit {
         this.composer.addPass(copyShader);
 
         let x = 0;
-        let y= 0;
-        let z= 0;
+        let y = 0;
+        let z = 0;
         let radius = 200;
-        for(let j = 0; j< 5; j++){
 
-          for(let i=0; i<10;i++){
-            const pts = [];
+        const fieldObjects = this.hexFieldFactory.generateHexField(new THREE.Vector3(x,y,z), radius, 3);
 
-            pts.push(new THREE.Vector3(x+0, y+radius, z));
-            pts.push(new THREE.Vector3(x+radius*0.866, y+radius*0.5, z));
-            pts.push(new THREE.Vector3(x+radius*0.866, y-radius*0.5, z));
-            pts.push(new THREE.Vector3(x+0, y-radius, z));
-            pts.push(new THREE.Vector3(x-radius*0.866, y-radius*0.5, z));
-            pts.push(new THREE.Vector3(x-radius*0.866, y+radius*0.5, z));
-            x+= (radius*1.732);
-            const hex = new THREE.Shape(pts);
-            https://github.com/anvaka/ngraph.path
-            const geometryhex = new THREE.ShapeGeometry(hex);
-            material.visible=false;
-
-            const hecccc = new THREE.Mesh( geometryhex, material );
-            hecccc.name= "ko: " + j +  "-"+ i;
-            const geo23 = new THREE.EdgesGeometry( hecccc.geometry ); // or WireframeGeometry
-            //var mat2 = new THREE.LineBasicMaterial( { color: 0xffffff, linewidth: 80 } );
-            const wireframe23 = new THREE.LineSegments( geo23, mat2 );
-
-
-            this.scene.add(hecccc)
-            this.scene.add( wireframe23 );
-          }
-          console.log( j%2)
-          y+= radius *1.5 ;
-          if( j%2 ===0){
-            console.log('oszta')
-            x = -1* (radius * 0.866)
-          }else{
-            x=0;
-          }
-
-        }
-
+        fieldObjects.forEach( fieldObject => this.scene.add(fieldObject));
 
         this.animate();
       })
-
-
 
 
     })
@@ -160,7 +126,7 @@ export class BattleFieldRenderingComponent implements OnInit {
 
   animate() {
     requestAnimationFrame(() => this.animate());
-    this.renderer.render( this.scene, this.camera);
+    this.renderer.render(this.scene, this.camera);
     this.cameraService.update();
 
     const time = Date.now() * 0.0005;
